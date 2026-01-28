@@ -1,0 +1,36 @@
+### Node / frontend
+node_modules/
+dist/
+.svelte-kit/
+.vite/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log
+assets/
+
+### Tauri / Rust
+/src-tauri/target/
+/src-tauri/.fingerprint/
+/src-tauri/Cargo.lock
+
+# Rust tooling
+**/*.rs.bk
+
+### OS-specific
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
