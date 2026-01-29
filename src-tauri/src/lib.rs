@@ -12,12 +12,20 @@ fn get_pet_state() -> pet::PetData {
 }
 
 #[tauri::command]
-fn show_overlay(app: AppHandle) -> Result<(), String> {
+fn show_overlay(app: AppHandle, state: tauri::State<'_, Arc<Mutex<MouseTrackerState>>>) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("overlay") {
         // Set to fullscreen for overlay mode
         window.set_fullscreen(true).map_err(|e| format!("Failed to set fullscreen: {}", e))?;
         window.show().map_err(|e| format!("Failed to show: {}", e))?;
         window.set_focus().map_err(|e| format!("Failed to focus: {}", e))?;
+        
+        // Activate mouse tracking
+        {
+            let mut tracker_state = state.lock().unwrap();
+            tracker_state.overlay_window = Some(window.clone());
+            tracker_state.is_active = true;
+        }
+        
         Ok(())
     } else {
         Err("Overlay window not found. Make sure it's defined in tauri.conf.json".to_string())
@@ -25,8 +33,16 @@ fn show_overlay(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn hide_overlay(app: AppHandle) -> Result<(), String> {
+fn hide_overlay(app: AppHandle, state: tauri::State<'_, Arc<Mutex<MouseTrackerState>>>) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("overlay") {
+        // Stop mouse tracking
+        {
+            let mut tracker_state = state.lock().unwrap();
+            tracker_state.is_active = false;
+            tracker_state.overlay_window = None;
+            tracker_state.pet_bounds = None;
+        }
+        
         window.set_fullscreen(false).map_err(|e| format!("Failed to unset fullscreen: {}", e))?;
         window.hide().map_err(|e| e.to_string())?;
     }
