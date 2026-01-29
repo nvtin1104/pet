@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import Pet from "../pet/Pet.svelte";
-  import { PetBehavior } from "../pet/PetBehavior";
+  import { PetBehavior, PET_WIDTH, PET_HEIGHT } from "../pet/PetBehavior";
   import {
     defaultPetState,
     getScreenSize,
-    setIgnoreCursorEvents,
+    updatePetBounds,
+    startMouseTracking,
+    stopMouseTracking,
     type PetState,
   } from "../stores/pet";
 
@@ -13,9 +15,6 @@
   let behavior: PetBehavior | null = $state(null);
   let animationFrameId: number;
   let lastTime: number = 0;
-  let isMouseOverPet: boolean = $state(false);
-  let mousePosition = $state({ x: 0, y: 0 });
-  let clickThroughTimeout: number | null = null;
 
   async function initBehavior() {
     try {
@@ -47,32 +46,15 @@
     // Sync state from behavior
     petState = { ...behavior.state };
 
-    // Check distance from mouse to pet and enable/disable click-through accordingly
-    if (!petState.isDragging) {
-      const petX = petState.position.x + 60; // Center of pet
-      const petY = petState.position.y + 40;
-      const distance = Math.sqrt(
-        Math.pow(mousePosition.x - petX, 2) + Math.pow(mousePosition.y - petY, 2)
-      );
-      const threshold = 150; // Enable click-through if mouse is more than 150px away
-      
-      if (distance > threshold && !isMouseOverPet) {
-        // Mouse is far from pet, enable click-through
-        if (clickThroughTimeout === null) {
-          clickThroughTimeout = window.setTimeout(() => {
-            setIgnoreCursorEvents(true).catch(console.error);
-            clickThroughTimeout = null;
-          }, 300); // Wait 300ms before enabling click-through
-        }
-      } else {
-        // Mouse is near pet, disable click-through
-        if (clickThroughTimeout !== null) {
-          clearTimeout(clickThroughTimeout);
-          clickThroughTimeout = null;
-        }
-        setIgnoreCursorEvents(false).catch(console.error);
-      }
-    }
+    // Update pet bounds in Rust backend for mouse tracking
+    // Add padding for easier clicking (10px on each side)
+    const padding = 10;
+    updatePetBounds(
+      petState.position.x - padding,
+      petState.position.y - padding,
+      PET_WIDTH + padding * 2,
+      PET_HEIGHT + padding * 2
+    ).catch(console.error);
 
     animationFrameId = requestAnimationFrame(gameLoop);
   }
@@ -95,7 +77,6 @@
     ) {
       if (e.button === 0) {
         // Left click on pet - start drag
-        isMouseOverPet = true;
         e.preventDefault();
         e.stopPropagation();
         behavior.startDrag();
@@ -104,9 +85,6 @@
   }
 
   function handleMouseMove(e: MouseEvent) {
-    // Update mouse position for distance calculation
-    mousePosition = { x: e.clientX, y: e.clientY };
-    
     if (!behavior || !petState.isDragging) return;
     e.preventDefault();
     e.stopPropagation();
@@ -126,20 +104,17 @@
   }
 
   function handlePetMouseEnter() {
-    isMouseOverPet = true;
+    // Mouse enter handler kept for potential future use
   }
 
   function handlePetMouseLeave() {
-    if (!petState.isDragging) {
-      isMouseOverPet = false;
-    }
+    // Mouse leave handler kept for potential future use
   }
 
   onMount(async () => {
     await initBehavior();
-    // Always disable click-through so overlay window can receive mouse events
-    // This allows us to detect when mouse enters pet area and enable interaction
-    setIgnoreCursorEvents(false).catch(console.error);
+    // Start mouse tracking in Rust backend
+    startMouseTracking().catch(console.error);
     animationFrameId = requestAnimationFrame(gameLoop);
   });
 
@@ -147,9 +122,8 @@
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
     }
-    if (clickThroughTimeout !== null) {
-      clearTimeout(clickThroughTimeout);
-    }
+    // Stop mouse tracking when overlay is destroyed
+    stopMouseTracking().catch(console.error);
   });
 </script>
 

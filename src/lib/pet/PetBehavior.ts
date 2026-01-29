@@ -5,8 +5,8 @@ export interface ScreenBounds {
   height: number;
 }
 
-const PET_WIDTH = 120;
-const PET_HEIGHT = 80;
+export const PET_WIDTH = 120;
+export const PET_HEIGHT = 80;
 const WALK_SPEED = 50; // pixels per second
 const RUN_SPEED = 150;
 
