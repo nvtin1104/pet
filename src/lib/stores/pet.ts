@@ -46,3 +46,20 @@ export async function showOverlay(): Promise<void> {
 export async function hideOverlay(): Promise<void> {
   await invoke("hide_overlay");
 }
+
+export async function updatePetBounds(
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): Promise<void> {
+  await invoke("update_pet_bounds", { x, y, width, height });
+}
+
+export async function startMouseTracking(): Promise<void> {
+  await invoke("start_mouse_tracking");
+}
+
+export async function stopMouseTracking(): Promise<void> {
+  await invoke("stop_mouse_tracking");
+}
