@@ -14,7 +14,21 @@
       "Bash(cargo build:*)",
       "Bash(dir:*)",
       "Bash(identify:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(git -C \"c:\\\\Project\\\\pet\" log --oneline -10)",
+      "Bash(git -C \"c:\\\\Project\\\\pet\" ls-files)",
+      "Bash(git -C \"c:\\\\Project\\\\pet\" status)",
+      "Bash(git -C \"c:\\\\Project\\\\pet\" branch -a)",
+      "Bash(git -C \"c:\\\\Project\\\\pet\" show main:.)",
+      "Bash(git -C \"c:\\\\Project\\\\pet\" ls-tree:*)",
+      "Bash(git -C:*)",
+      "WebFetch(domain:fossies.org)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(flutter create:*)",
+      "Bash(cmd.exe /c \"flutter create --org com.knightfocus --project-name knight_focus --platforms windows app\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''C:\\\\'' -Filter ''flutter.bat'' -Recurse -ErrorAction SilentlyContinue -Force | Select-Object -First 5 -ExpandProperty FullName\")",
+      "Bash(powershell.exe:*)",
+      "Bash(tr:*)"
     ]
   }
 }

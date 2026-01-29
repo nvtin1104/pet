@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command \"cd ''c:\\\\Project\\\\pet''; flutter create --org com.knightfocus --project-name knight_focus --platforms windows app\")"
+    ]
+  }
+}

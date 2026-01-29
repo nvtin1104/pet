@@ -1,0 +1,46 @@
+name: knight_focus
+description: "A desktop pet focus application featuring a knight companion."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Game engine for sprite animations
+  flame: ^1.18.0
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Local database
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+
+  # File paths
+  path_provider: ^2.1.2
+
+  # Utilities
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Isar code generation
+  isar_generator: ^3.1.0+1
+  build_runner: ^2.4.8
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/Colour1/Outline/120x80_PNGSheets/
+    - assets/Colour1/NoOutline/120x80_PNGSheets/
+    - assets/Colour2/Outline/120x80_PNGSheets/
+    - assets/Colour2/NoOutline/120x80_PNGSheets/
