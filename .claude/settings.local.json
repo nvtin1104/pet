@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install)",
+      "Bash(npx tauri icon --help:*)",
+      "Bash(where:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(kill:*)",
+      "Bash(cargo build:*)",
+      "Bash(dir:*)",
+      "Bash(identify:*)",
+      "Bash(tree:*)"
+    ]
+  }
+}

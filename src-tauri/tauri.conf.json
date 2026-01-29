@@ -13,31 +13,24 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "label": "pet",
-        "title": "PetFocus",
+        "label": "main",
+        "title": "PetFocus Settings",
         "width": 800,
         "height": 600,
-        "transparent": false,
-        "decorations": true,
-        "alwaysOnTop": false,
-        "skipTaskbar": false,
         "resizable": true,
-        "shadow": true,
-        "visible": true
+        "decorations": true,
+        "transparent": false,
+        "visible": false
       },
       {
         "label": "overlay",
-        "title": "",
-        "transparent": true,
+        "title": "Pet Overlay",
         "decorations": false,
+        "transparent": true,
         "alwaysOnTop": true,
         "skipTaskbar": true,
-        "resizable": false,
-        "shadow": false,
-        "visible": false,
-        "fullscreen": false,
-        "width": 1920,
-        "height": 1080
+        "maximized": true,
+        "visible": true
       }
     ],
     "security": {
@@ -47,6 +40,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/icon.ico"]
+    "icon": [
+      "icons/icon.ico"
+    ]
   }
 }
