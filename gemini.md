@@ -1,0 +1,171 @@
+# Gemini Agent Guide - PetFocus
+
+## Quick Reference
+
+| Key | Value |
+|-----|-------|
+| Tech | Electron 40.x, Vanilla JS, sql.js, Canvas |
+| Branch | electron |
+| Entry (Main) | main.js |
+| Entry (Renderer) | renderer.js |
+| Database | %APPDATA%/petfocus/petfocus.db |
+
+## Critical Constraints
+
+| Rule | Reason |
+|------|--------|
+| `nodeIntegration: false` | NEVER change - security |
+| `contextIsolation: true` | NEVER change - security |
+| Database in main process ONLY | Renderer has no Node access |
+| Whitelist IPC channels | Prevent arbitrary code execution |
+| No eval() / new Function() | XSS prevention |
+
+## File Map
+
+```
+main.js           → BrowserWindow, IPC handlers, db init
+preload.js        → contextBridge (window.petAPI)
+renderer.js       → Pet animation, MousePassthrough, UI
+database/db.js    → sql.js init, migrations, query helpers
+database/todos.js → Todo CRUD
+database/subscriptions.js → Subscription CRUD
+database/settings.js → Key-value store
+index.html        → DOM structure, CSP headers
+styles.css        → Transparent overlay, UI panel
+```
+
+## IPC Pattern
+
+```javascript
+// Renderer (via contextBridge)
+const todos = await window.petAPI.db.getTodos();
+const newTodo = await window.petAPI.db.createTodo({ title: 'Task' });
+
+// Main process (ipcMain.handle)
+ipcMain.handle('db:get-todos', async () => {
+  try {
+    return TodosDB.getAll();
+  } catch (error) {
+    console.error('Error:', error);
+    throw error;
+  }
+});
+```
+
+## Database Schema
+
+```sql
+-- todos
+id INTEGER PRIMARY KEY, title TEXT, completed INTEGER,
+priority INTEGER, due_date TEXT, created_at TEXT, updated_at TEXT
+
+-- subscriptions
+id INTEGER PRIMARY KEY, name TEXT, amount REAL, currency TEXT,
+billing_cycle TEXT, next_billing_date TEXT, category TEXT,
+notes TEXT, created_at TEXT, updated_at TEXT
+
+-- settings
+key TEXT PRIMARY KEY, value TEXT, updated_at TEXT
+
+-- pet_state
+id INTEGER (always 1), current_state TEXT, happiness INTEGER,
+last_interaction TEXT, total_focus_minutes INTEGER, updated_at TEXT
+```
+
+## API Quick Reference
+
+```javascript
+// Window
+window.petAPI.window.togglePassthrough(bool)
+window.petAPI.window.setPosition(x, y)
+window.petAPI.window.minimizeToTray()
+
+// Todos
+window.petAPI.db.getTodos()
+window.petAPI.db.createTodo({ title, priority?, dueDate? })
+window.petAPI.db.updateTodo(id, { completed?, title?, ... })
+window.petAPI.db.deleteTodo(id)
+
+// Subscriptions
+window.petAPI.db.getSubscriptions()
+window.petAPI.db.createSubscription({ name, amount, billingCycle?, ... })
+
+// Settings
+window.petAPI.db.getSettings()
+window.petAPI.db.updateSettings({ key: value })
+```
+
+## Mouse Passthrough Logic
+
+```
+1. Window starts: setIgnoreMouseEvents(true, {forward: true})
+2. Mouse enters #pet-container: setIgnoreMouseEvents(false)
+3. Mouse leaves #pet-container: setIgnoreMouseEvents(true)
+4. Throttled fallback: 16ms mousemove check
+```
+
+## Pet State Machine
+
+```
+STATES = { IDLE, RUN, SLEEP }
+
+Transitions:
+- Random behavior: 5-15 sec intervals
+- 60% → IDLE, 30% → RUN, 10% → SLEEP
+- Click → RUN (turn around)
+- Double-click → Toggle UI panel
+```
+
+## Sprite Config
+
+```javascript
+SPRITES = {
+  idle:  { frames: 10, frameRate: 8 },
+  run:   { frames: 10, frameRate: 12 },
+  sleep: { frames: 1, frameRate: 1 }
+}
+// Path: ./assets/knight/Colour1/Outline/120x80_PNGSheets/
+// Frame size: 120x80, Scale: 1.5x
+```
+
+## Commands
+
+```bash
+npm install   # Install dependencies
+npm start     # Run app
+```
+
+## Debugging
+
+| Task | Method |
+|------|--------|
+| DevTools | Ctrl+Shift+I or uncomment in main.js |
+| Main logs | Terminal running npm start |
+| DB file | %APPDATA%/petfocus/petfocus.db |
+| Test IPC | DevTools console: `await window.petAPI.db.getTodos()` |
+
+## Security Checklist
+
+- [ ] No eval() or new Function()
+- [ ] No remote code loading
+- [ ] Prepared statements for SQL (params array)
+- [ ] IPC channels in validChannels whitelist
+- [ ] CSP headers in index.html
+- [ ] No shell commands from renderer
+
+## Common Fixes
+
+| Issue | Solution |
+|-------|----------|
+| App won't start | Check main.js for syntax errors |
+| Database empty | Check %APPDATA%/petfocus/ exists |
+| Click-through broken | Check MousePassthrough.init() called |
+| Pet not animating | Check sprite paths, image loading |
+| IPC not working | Check channel in validChannels |
+
+## Links
+
+- [Requirements](../requirements.md)
+- [Claude Guide](./claude.md)
+- [Plan](../../plans/20260130-1030-petfocus-electron/plan.md)
+- [Electron Docs](https://www.electronjs.org/docs/latest/)
