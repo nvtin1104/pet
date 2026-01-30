@@ -1,0 +1,48 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/dist/
+/build/
+
+# VSCode
+.vscode/
+
+# Env
+.env
+.env.*
+
+# Misc
+*.swp
+*.swo
+
+# Database
+*.sqlite
+*.db
+
+# Electron
+*.asar
+
+# Output
+out/
+
+# Coverage
+coverage/
+
+# Others
+.idea/
+*.iml
+
+# Ignore generated icons
+assets/**/*.ico
+assets/**/*.icns

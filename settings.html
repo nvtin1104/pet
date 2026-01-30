@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+  <link rel="stylesheet" href="settings.css">
+  <title>PetFocus</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar">
+      <div class="logo">
+        <div class="logo-icon"></div>
+        <span>PetFocus</span>
+      </div>
+
+      <ul class="nav-items">
+        <li data-section="todos" class="active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+          <span>Todos</span>
+        </li>
+        <li data-section="timer">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Timer</span>
+        </li>
+        <li data-section="subscriptions">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+            <line x1="1" y1="10" x2="23" y2="10"></line>
+          </svg>
+          <span>Subscriptions</span>
+        </li>
+        <li data-section="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </li>
+      </ul>
+
+      <!-- Pet Mode Toggle -->
+      <div id="pet-mode-section">
+        <div id="pet-mode-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="pet-mode-checkbox">
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">Pet Mode</span>
+        </div>
+        <p class="pet-mode-hint">Enable to show desktop pet</p>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="content">
+      <!-- Todos Section -->
+      <section id="section-todos" class="section active">
+        <div class="section-header">
+          <h1>Todos</h1>
+        </div>
+        <div id="todo-input-container">
+          <input type="text" id="todo-input" placeholder="What needs to be done?">
+          <button id="add-todo-btn">Add</button>
+        </div>
+        <div id="todo-filters">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="active">Active</button>
+          <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+        <ul id="todo-list"></ul>
+        <div id="todo-stats">
+          <span id="todo-count">0 items</span>
+        </div>
+      </section>
+
+      <!-- Timer Section -->
+      <section id="section-timer" class="section">
+        <div class="section-header">
+          <h1>Pomodoro Timer</h1>
+        </div>
+        <div id="timer-container">
+          <div id="timer-display">
+            <span id="timer-minutes">25</span>
+            <span class="timer-separator">:</span>
+            <span id="timer-seconds">00</span>
+          </div>
+          <div id="timer-label">Focus Time</div>
+          <div id="timer-controls">
+            <button id="timer-start" class="timer-btn primary">Start</button>
+            <button id="timer-pause" class="timer-btn" disabled>Pause</button>
+            <button id="timer-reset" class="timer-btn">Reset</button>
+          </div>
+          <div id="timer-presets">
+            <button class="preset-btn active" data-type="focus">Focus</button>
+            <button class="preset-btn" data-type="short">Short Break</button>
+            <button class="preset-btn" data-type="long">Long Break</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subscriptions Section -->
+      <section id="section-subscriptions" class="section">
+        <div class="section-header">
+          <h1>Subscriptions</h1>
+          <button id="add-subscription-btn" class="header-btn">+ Add</button>
+        </div>
+        <div id="subscription-summary">
+          <div class="summary-card">
+            <span class="summary-label">Monthly Total</span>
+            <span id="monthly-total" class="summary-value">$0.00</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Yearly Total</span>
+            <span id="yearly-total" class="summary-value">$0.00</span>
+          </div>
+        </div>
+        <ul id="subscription-list"></ul>
+
+        <!-- Add Subscription Modal -->
+        <div id="subscription-modal" class="modal hidden">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Add Subscription</h2>
+              <button class="modal-close">&times;</button>
+            </div>
+            <form id="subscription-form">
+              <div class="form-group">
+                <label for="sub-name">Name</label>
+                <input type="text" id="sub-name" required placeholder="Netflix, Spotify...">
+              </div>
+              <div class="form-group">
+                <label for="sub-amount">Amount</label>
+                <input type="number" id="sub-amount" required step="0.01" min="0" placeholder="9.99">
+              </div>
+              <div class="form-group">
+                <label for="sub-currency">Currency</label>
+                <select id="sub-currency">
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR</option>
+                  <option value="VND">VND</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="sub-cycle">Billing Cycle</label>
+                <select id="sub-cycle">
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="sub-category">Category</label>
+                <select id="sub-category">
+                  <option value="entertainment">Entertainment</option>
+                  <option value="productivity">Productivity</option>
+                  <option value="utilities">Utilities</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn-cancel">Cancel</button>
+                <button type="submit" class="btn-submit">Add Subscription</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Settings Section -->
+      <section id="section-settings" class="section">
+        <div class="section-header">
+          <h1>Settings</h1>
+        </div>
+
+        <div class="settings-group">
+          <h2>Pet</h2>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label for="pet-name">Pet Name</label>
+              <span class="setting-desc">Give your pet a name</span>
+            </div>
+            <input type="text" id="pet-name" value="Knight">
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Always on Top</label>
+              <span class="setting-desc">Keep pet above other windows</span>
+            </div>
+            <label class="toggle-switch small">
+              <input type="checkbox" id="always-on-top" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h2>Timer</h2>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label for="pomodoro-minutes">Focus Duration</label>
+              <span class="setting-desc">Minutes per focus session</span>
+            </div>
+            <input type="number" id="pomodoro-minutes" value="25" min="1" max="60">
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label for="short-break">Short Break</label>
+              <span class="setting-desc">Minutes for short breaks</span>
+            </div>
+            <input type="number" id="short-break" value="5" min="1" max="30">
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label for="long-break">Long Break</label>
+              <span class="setting-desc">Minutes for long breaks</span>
+            </div>
+            <input type="number" id="long-break" value="15" min="1" max="60">
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h2>System</h2>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Start with Windows</label>
+              <span class="setting-desc">Launch app on system startup</span>
+            </div>
+            <label class="toggle-switch small">
+              <input type="checkbox" id="start-with-system">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div class="setting-info">
+              <label>Sound Enabled</label>
+              <span class="setting-desc">Play sounds for notifications</span>
+            </div>
+            <label class="toggle-switch small">
+              <input type="checkbox" id="sound-enabled" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="settings-renderer.js"></script>
+</body>
+</html>
