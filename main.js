@@ -36,7 +36,13 @@ function createSettingsWindow() {
     }
   });
 
-  settingsWindow.loadFile('settings.html');
+  // Load from Vite dev server in development, or from dist in production
+  const isDev = !app.isPackaged;
+  if (isDev) {
+    settingsWindow.loadURL('http://localhost:5173/src/settings/index.html');
+  } else {
+    settingsWindow.loadFile(path.join(__dirname, 'dist', 'settings.html'));
+  }
 
   // Show when ready
   settingsWindow.once('ready-to-show', () => {
