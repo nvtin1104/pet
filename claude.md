@@ -4,7 +4,7 @@
 
 PetFocus is an Electron desktop pet + productivity app. You are working on the `electron` branch.
 
-**Tech Stack:** Electron 40.x, Vanilla JS, sql.js, Canvas rendering
+**Tech Stack:** Electron 40.x, Vue 3, Vite, Tailwind CSS, TypeScript, sql.js, Canvas (Pet)
 
 ## Key Files
 
@@ -29,27 +29,27 @@ npm start            # Launch app
 
 ## Teach
 
-**Mục tiêu học tập:** Hiểu kiến trúc Electron + Vue Pet, pattern IPC, logic canvas sprite, và tích hợp Tailwind cho UI.
+**Learning objectives:** Understand the Electron + Vue Pet architecture, IPC patterns, canvas sprite logic, and how to integrate Tailwind for UI.
 
-**Chủ đề bài học:**
-1. Thiết lập & chạy: `npm install`, `npm run dev`.
-2. Vite + Electron dev flow (DEV_SERVER_URL, `scripts/start-dev.js`).
-3. Port renderer → Vue (component & composables, `src/pet/*`).
-4. Mouse passthrough & IPC (cập nhật `preload.js` whitelist).
-5. Quản lý assets & Tailwind (move to `public/assets/` + `tailwind.css`).
-6. Build & production verification (`vite build`, `electron` packaging).
+**Topics:**
+1. Setup & run (npm install, npm run dev)
+2. Vite + Electron dev flow (DEV_SERVER_URL, scripts/start-dev.js)
+3. Port renderer → Vue (components & composables, src/pet/*)
+4. Mouse passthrough & IPC (preload.js whitelist)
+5. Asset management & Tailwind (move to public/assets/ + tailwind.css)
+6. Build & production verification (vite build, electron packaging)
 
-**Bài tập thực hành:**
-- B1: Thêm state mới `dance` cho Pet (sửa `src/pet/components/PetCanvas.vue`: `STATES`, `SPRITES`, `startBehavior`).
-- B2: Viết checklist kiểm thử manual: drag, click, double-click → mở Settings.
-- B3: Dùng Tailwind để tái tạo một phần UI của Pet bằng utility classes.
+**Exercises:**
+- Ex1: Add a new `dance` state to the Pet (edit `src/pet/components/PetCanvas.vue`: `STATES`, `SPRITES`, `startBehavior`).
+- Ex2: Create a manual test checklist: drag, click, double-click → open Settings.
+- Ex3: Recreate a portion of the Pet UI using Tailwind utility classes.
 
-**Ví dụ prompt cho AI (để dạy/kiểm tra học viên):**
-- "Hướng dẫn port state 'dance' vào Pet: các file cần sửa và các bước thực hiện." 
-- "Kiểm tra CSP dev cho HMR và đề xuất chỉnh sửa nếu cần."
+**Example AI prompts (teaching/testing):**
+- "Explain the steps to add a 'dance' state to the Pet: files to edit and tests to run."
+- "Check the dev CSP for HMR and recommend necessary changes."
 
-**Tiêu chí đánh giá:**
-- Dev & Build chạy không lỗi; Pet hoạt động (animation, drag, click/dblclick); IPC an toàn (preload whitelist); tài liệu được cập nhật.
+**Assessment criteria:**
+- Dev & production builds run without errors; Pet behaves correctly (animation, drag, click/dblclick); IPC is secure (preload whitelist); documentation updated.
 
 ## Architecture Rules
 

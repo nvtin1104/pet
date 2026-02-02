@@ -4,7 +4,7 @@
 
 | Key | Value |
 |-----|-------|
-| Tech | Electron 40.x, Vanilla JS, sql.js, Canvas |
+| Tech | Electron 40.x, Vue 3, Vite, Tailwind CSS, TypeScript, sql.js, Canvas (Pet) |
 | Branch | electron |
 | Entry (Main) | main.js |
 | Entry (Renderer) | src/pet (Vue Pet) |
@@ -137,24 +137,24 @@ npm start     # Run app
 
 ## Teach
 
-**Mục tiêu học tập:** Hiểu kiến trúc Electron + Vue Pet, IPC patterns, canvas sprite logic và Tailwind.
+**Learning objectives:** Understand the Electron + Vue Pet architecture, IPC patterns, canvas sprite logic, and Tailwind.
 
-**Chủ đề:**
+**Topics:**
 1. Setup & run (npm install, npm run dev)
-2. Vite + Electron dev flow (DEV_SERVER_URL, `scripts/start-dev.js`)
-3. Port renderer → Vue (`src/pet/`) và component hóa logic canvas
+2. Vite + Electron dev flow (DEV_SERVER_URL, scripts/start-dev.js)
+3. Port renderer → Vue (src/pet/) and componentize canvas logic
 4. Mouse passthrough & IPC (preload whitelist)
 5. Assets & Tailwind integration
 6. Build & production verification
 
-**Bài tập:**
-- Thêm trạng thái mới cho Pet (ví dụ `dance`) và viết pseudo-steps sửa file tương ứng.
-- Viết checklist chức năng (drag, click, dblclick → open settings).
+**Exercises:**
+- Add a new state to the Pet (e.g., `dance`) and write pseudo-steps for the required file changes.
+- Write a functional checklist (drag, click, dblclick → open settings).
 
-**Ví dụ prompt cho AI:**
-- "Cho tôi các bước để thêm state 'dance' vào Pet (file, symbol, test)."
+**Example AI prompt:**
+- "List the steps to add a 'dance' state to the Pet (files, symbols, tests)."
 
-**Tiêu chí đánh giá:** Dev + Build chạy; Pet đúng hành vi; IPC bảo mật.
+**Assessment criteria:** Dev & build succeed; Pet behaves correctly; IPC is secure.
 
 ## Debugging
 

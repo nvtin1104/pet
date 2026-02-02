@@ -4,7 +4,7 @@
 
 PetFocus is an Electron desktop pet + productivity app. You are working on the `electron` branch.
 
-**Tech Stack:** Electron 40.x, Vanilla JS, sql.js, Canvas rendering
+**Tech Stack:** Electron 40.x, Vue 3, Vite, Tailwind CSS, TypeScript, sql.js, Canvas (Pet)
 
 ## Key Files
 
