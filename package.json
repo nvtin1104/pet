@@ -4,17 +4,22 @@
   "description": "Desktop pet + productivity app",
   "main": "main.js",
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "node scripts/start-dev.js",
     "build": "vue-tsc && vite build",
     "start": "electron .",
     "start:dev": "npm run dev",
     "type-check": "vue-tsc --noEmit"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.2.0",
     "@vitejs/plugin-vue": "^6.0.3",
+    "autoprefixer": "^10.4.24",
     "concurrently": "^9.2.1",
     "electron": "^28.0.0",
+    "get-port": "^6.1.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vue-tsc": "^3.2.4",

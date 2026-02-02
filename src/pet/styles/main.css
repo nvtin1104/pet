@@ -1,0 +1,7 @@
+/* Minimal pet-specific styles; Tailwind utilities are available via tailwind.css */
+#pet-container {
+  background: transparent;
+}
+canvas {
+  image-rendering: pixelated;
+}

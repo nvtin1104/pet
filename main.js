@@ -39,7 +39,8 @@ function createSettingsWindow() {
   // Load from Vite dev server in development, or from dist in production
   const isDev = !app.isPackaged;
   if (isDev) {
-    settingsWindow.loadURL('http://localhost:5173/src/settings/index.html');
+    const devUrl = process.env.DEV_SERVER_URL || `http://localhost:${process.env.PORT || 5173}`;
+    settingsWindow.loadURL(`${devUrl}/src/settings/index.html`);
   } else {
     settingsWindow.loadFile(path.join(__dirname, 'dist', 'settings.html'));
   }
@@ -103,7 +104,14 @@ function createPetWindow() {
     }
   });
 
-  petWindow.loadFile('index.html');
+  // Load from Vite dev server in development, or from dist in production
+  const isDev = !app.isPackaged;
+  if (isDev) {
+    const devUrl = process.env.DEV_SERVER_URL || `http://localhost:${process.env.PORT || 5173}`;
+    petWindow.loadURL(`${devUrl}/src/pet/index.html`);
+  } else {
+    petWindow.loadFile(path.join(__dirname, 'dist', 'pet.html'));
+  }
 
   // Enable click-through for transparent areas
   petWindow.setIgnoreMouseEvents(true, { forward: true });

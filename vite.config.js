@@ -14,7 +14,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         settings: path.resolve(__dirname, 'src/settings/index.html'),
-        // pet: path.resolve(__dirname, 'src/pet/index.html'), // Phase 2
+        pet: path.resolve(__dirname, 'src/pet/index.html'),
       },
       output: {
         manualChunks: undefined, // Disable chunking for Electron CSP
@@ -22,7 +22,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173,
+    port: Number(process.env.PORT) || 5173,
     strictPort: true,
   },
   resolve: {
