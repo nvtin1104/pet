@@ -12,13 +12,13 @@ PetFocus is an Electron desktop pet + productivity app. You are working on the `
 |------|---------|----------|
 | `main.js` | Electron main process, IPC handlers, window config | High |
 | `preload.js` | contextBridge API exposure, channel whitelist | High |
-| `renderer.js` | UI logic, mouse passthrough, pet animation | High |
+| `src/pet/` | Vue Pet app (PetCanvas component, sprites) | High |
 | `database/db.js` | sql.js initialization, migrations, queries | High |
 | `database/todos.js` | Todo CRUD operations | Medium |
 | `database/subscriptions.js` | Subscription CRUD operations | Medium |
 | `database/settings.js` | Key-value settings store | Medium |
-| `index.html` | Main UI with CSP headers | Medium |
-| `styles.css` | Transparent overlay styles, UI panel | Medium |
+| `src/pet/index.html` | Pet entry (dev) with CSP headers | Medium |
+| `src/pet/styles/main.css` | Pet-specific styles (uses Tailwind) | Medium |
 
 ## Development Commands
 

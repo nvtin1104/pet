@@ -5,14 +5,19 @@ This file documents the folder and file structure of the project as of January 3
 ## Root Directory
 - claude.md
 - gemini.md
-- index.html
 - LICENSE
 - main.js
 - package.json
 - preload.js
-- renderer.js
 - requirements.md
-- styles.css
+- (Pet UI migrated to `src/pet/`)
+
+## src/pet/
+- index.html
+- main.ts
+- App.vue
+- components/
+- styles/
 
 ## assets/
 - knight/

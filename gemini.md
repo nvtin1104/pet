@@ -7,7 +7,7 @@
 | Tech | Electron 40.x, Vanilla JS, sql.js, Canvas |
 | Branch | electron |
 | Entry (Main) | main.js |
-| Entry (Renderer) | renderer.js |
+| Entry (Renderer) | src/pet (Vue Pet) |
 | Database | %APPDATA%/petfocus/petfocus.db |
 
 ## Critical Constraints
@@ -25,13 +25,13 @@
 ```
 main.js           → BrowserWindow, IPC handlers, db init
 preload.js        → contextBridge (window.petAPI)
-renderer.js       → Pet animation, MousePassthrough, UI
+src/pet/          → Vue Pet app (PetCanvas component, sprites)
 database/db.js    → sql.js init, migrations, query helpers
 database/todos.js → Todo CRUD
 database/subscriptions.js → Subscription CRUD
 database/settings.js → Key-value store
-index.html        → DOM structure, CSP headers
-styles.css        → Transparent overlay, UI panel
+src/pet/index.html → Pet entry (dev) with CSP headers
+src/pet/styles/main.css → Pet-specific styles (uses Tailwind)
 ```
 
 ## IPC Pattern

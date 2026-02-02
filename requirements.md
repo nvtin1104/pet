@@ -159,10 +159,13 @@ win.setIgnoreMouseEvents(true, { forward: true });
 pet/
 ├── main.js              # Electron main process, IPC handlers
 ├── preload.js           # contextBridge API exposure
-├── index.html           # Main UI with CSP headers
-├── renderer.js          # UI logic, mouse passthrough, pet animation
-├── styles.css           # Transparent overlay styles
+├── src/pet/             # Vue Pet app
+│   ├── index.html       # Pet entry (dev)
+│   ├── main.ts          # Vue entry
+│   ├── App.vue          # Root component
+│   └── components/      # PetCanvas, etc.
 ├── package.json
+├── public/assets/       # Sprite assets served at /assets/
 ├── database/
 │   ├── index.js         # Module exports
 │   ├── db.js            # sql.js init, migrations, queries
