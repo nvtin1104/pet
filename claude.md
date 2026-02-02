@@ -27,6 +27,30 @@ npm install          # Install dependencies
 npm start            # Launch app
 ```
 
+## Teach
+
+**Mục tiêu học tập:** Hiểu kiến trúc Electron + Vue Pet, pattern IPC, logic canvas sprite, và tích hợp Tailwind cho UI.
+
+**Chủ đề bài học:**
+1. Thiết lập & chạy: `npm install`, `npm run dev`.
+2. Vite + Electron dev flow (DEV_SERVER_URL, `scripts/start-dev.js`).
+3. Port renderer → Vue (component & composables, `src/pet/*`).
+4. Mouse passthrough & IPC (cập nhật `preload.js` whitelist).
+5. Quản lý assets & Tailwind (move to `public/assets/` + `tailwind.css`).
+6. Build & production verification (`vite build`, `electron` packaging).
+
+**Bài tập thực hành:**
+- B1: Thêm state mới `dance` cho Pet (sửa `src/pet/components/PetCanvas.vue`: `STATES`, `SPRITES`, `startBehavior`).
+- B2: Viết checklist kiểm thử manual: drag, click, double-click → mở Settings.
+- B3: Dùng Tailwind để tái tạo một phần UI của Pet bằng utility classes.
+
+**Ví dụ prompt cho AI (để dạy/kiểm tra học viên):**
+- "Hướng dẫn port state 'dance' vào Pet: các file cần sửa và các bước thực hiện." 
+- "Kiểm tra CSP dev cho HMR và đề xuất chỉnh sửa nếu cần."
+
+**Tiêu chí đánh giá:**
+- Dev & Build chạy không lỗi; Pet hoạt động (animation, drag, click/dblclick); IPC an toàn (preload whitelist); tài liệu được cập nhật.
+
 ## Architecture Rules
 
 ### Critical Security (NEVER change)

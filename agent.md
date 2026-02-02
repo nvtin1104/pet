@@ -27,6 +27,27 @@ npm install          # Install dependencies
 npm start            # Launch app
 ```
 
+## Teach
+
+**Mục tiêu học tập:** Nắm vững cách chuyển renderer vanilla sang Vue, sử dụng IPC an toàn, và tích hợp Tailwind cho UI.
+
+**Chủ đề học:**
+1. Setup & run (npm install, npm run dev)
+2. Vite + Electron dev flow (DEV_SERVER_URL, start-dev.js)
+3. Port renderer → Vue (component/composables, `src/pet/*`)
+4. Mouse passthrough & IPC whitelist (`preload.js`)
+5. Asset management (public dir) & Tailwind
+6. Build & production verification
+
+**Bài tập thực hành:**
+- B1: Thêm state `dance` cho Pet (sửa `src/pet/components/PetCanvas.vue` và cập nhật `SPRITES`, `STATES`).
+- B2: Kiểm thử manual: kéo, click, dblclick → mở Settings.
+
+**Ví dụ prompt AI:**
+- "Mô tả các bước cần làm để port state 'dance' vào Pet; các file/symbol cần thay đổi; cách kiểm thử."
+
+**Tiêu chí đánh giá:** Dev & prod chạy; Pet hoạt động; IPC an toàn; docs cập nhật.
+
 ## Architecture Rules
 
 ### Critical Security (NEVER change)

@@ -135,6 +135,27 @@ npm install   # Install dependencies
 npm start     # Run app
 ```
 
+## Teach
+
+**Mục tiêu học tập:** Hiểu kiến trúc Electron + Vue Pet, IPC patterns, canvas sprite logic và Tailwind.
+
+**Chủ đề:**
+1. Setup & run (npm install, npm run dev)
+2. Vite + Electron dev flow (DEV_SERVER_URL, `scripts/start-dev.js`)
+3. Port renderer → Vue (`src/pet/`) và component hóa logic canvas
+4. Mouse passthrough & IPC (preload whitelist)
+5. Assets & Tailwind integration
+6. Build & production verification
+
+**Bài tập:**
+- Thêm trạng thái mới cho Pet (ví dụ `dance`) và viết pseudo-steps sửa file tương ứng.
+- Viết checklist chức năng (drag, click, dblclick → open settings).
+
+**Ví dụ prompt cho AI:**
+- "Cho tôi các bước để thêm state 'dance' vào Pet (file, symbol, test)."
+
+**Tiêu chí đánh giá:** Dev + Build chạy; Pet đúng hành vi; IPC bảo mật.
+
 ## Debugging
 
 | Task | Method |
