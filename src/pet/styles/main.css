@@ -1,7 +1,46 @@
 /* Minimal pet-specific styles; Tailwind utilities are available via tailwind.css */
-#pet-container {
-  background: transparent;
+
+/* Ensure fullscreen transparent overlay */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent !important;
 }
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  background: transparent !important;
+}
+
+#pet-root {
+  width: 100vw;
+  height: 100vh;
+  background: transparent !important;
+}
+
+#pet-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent !important;
+}
+
 canvas {
   image-rendering: pixelated;
+}
+
+/* Context menu needs pointer events */
+.pet-context-menu {
+  pointer-events: auto !important;
+}
+
+/* Interactive mode hitbox styling */
+.interactive-hitbox {
+  cursor: pointer;
 }

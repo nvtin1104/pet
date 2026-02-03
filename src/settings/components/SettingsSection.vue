@@ -34,6 +34,21 @@
           <span class="slider"></span>
         </label>
       </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <label>Fullscreen Pet Mode</label>
+          <span class="setting-desc">Make pet visual fullscreen while only a small hit box accepts input</span>
+        </div>
+        <label class="toggle-switch small">
+          <input
+            type="checkbox"
+            id="pet-fullscreen"
+            v-model="settings.petFullscreen"
+            @change="updateSetting('petFullscreen', settings.petFullscreen)"
+          >
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
 
     <!-- Timer Settings -->
@@ -137,7 +152,6 @@
 
 <script setup lang="ts">
 import { useSettings } from '../composables/useSettings';
-import type { Settings } from '@/types/petAPI';
 
 const { settings, updateSetting } = useSettings();
 </script>

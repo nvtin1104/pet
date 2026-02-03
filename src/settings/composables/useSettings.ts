@@ -6,6 +6,7 @@ export function useSettings() {
     petName: 'Knight',
     alwaysOnTop: false,
     petModeEnabled: false,
+    petFullscreen: false,
     focusDuration: 25,
     shortBreakDuration: 5,
     longBreakDuration: 15,
@@ -40,6 +41,8 @@ export function useSettings() {
         window.petAPI.window.setAlwaysOnTop(value as boolean);
       } else if (key === 'petModeEnabled') {
         window.petAPI.window.togglePetMode(value as boolean);
+      } else if (key === 'petFullscreen') {
+        window.petAPI.window.setPetFullscreen(value as boolean);
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to update setting';
@@ -58,6 +61,9 @@ export function useSettings() {
       }
       if ('petModeEnabled' in data) {
         window.petAPI.window.togglePetMode(data.petModeEnabled!);
+      }
+      if ('petFullscreen' in data) {
+        window.petAPI.window.setPetFullscreen(data.petFullscreen!);
       }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to update settings';

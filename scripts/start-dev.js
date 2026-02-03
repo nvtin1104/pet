@@ -36,9 +36,14 @@ function spawnCmdBin(binPath, args, opts) {
       process.exit(code);
     });
 
-    // Wait for Vite to be ready
+    // Wait for Vite to be ready (ensure the exact pages Electron will load are available)
     await new Promise((resolve, reject) => {
-      waitOn({ resources: [devUrl], timeout: 30000 }, (err) => {
+      const resources = [
+        `${devUrl}/src/settings/index.html`,
+        `${devUrl}/src/pet/index.html`
+      ];
+      console.log('Waiting for Vite resources:', resources);
+      waitOn({ resources, timeout: 60000 }, (err) => {
         if (err) return reject(err);
         resolve();
       });

@@ -17,7 +17,7 @@
         <button
           id="timer-start"
           class="timer-btn primary"
-          :disabled="timer.isRunning"
+          :disabled="timer.isRunning.value"
           @click="timer.start()"
         >
           Start
@@ -25,7 +25,7 @@
         <button
           id="timer-pause"
           class="timer-btn"
-          :disabled="!timer.isRunning"
+          :disabled="!timer.isRunning.value"
           @click="timer.pause()"
         >
           Pause
@@ -44,7 +44,7 @@
           v-for="preset in presets"
           :key="preset.type"
           class="preset-btn"
-          :class="{ active: timer.currentType === preset.type }"
+          :class="{ active: timer.currentType.value === preset.type }"
           :data-type="preset.type"
           @click="timer.setType(preset.type)"
         >

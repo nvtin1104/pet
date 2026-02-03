@@ -58,7 +58,8 @@ const SettingsDB = {
       startWithSystem: false,
       soundEnabled: true,
       theme: 'dark',
-      petModeEnabled: false
+      petModeEnabled: false,
+      petFullscreen: false
     };
   },
 

@@ -6,8 +6,18 @@
         content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://localhost:*">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PetFocus - Pet</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent !important;
+    }
+  </style>
 </head>
-<body>
+<body style="background: transparent !important;">
   <div id="app"></div>
   <script type="module" src="/src/pet/main.ts"></script>
 </body>

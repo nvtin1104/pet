@@ -19,6 +19,7 @@ export interface Settings {
   petName: string;
   alwaysOnTop: boolean;
   petModeEnabled: boolean;
+  petFullscreen: boolean;
   focusDuration: number;
   shortBreakDuration: number;
   longBreakDuration: number;
@@ -48,11 +49,22 @@ export interface PetAPI {
     setPosition(x: number, y: number): void;
     getCursorInWindow(): Promise<boolean>;
     togglePetMode(enabled: boolean): void;
+    setPetFullscreen(enabled: boolean): void;
     setAlwaysOnTop(enabled: boolean): void;
     showSettings(): void;
     minimizeToTray(): void;
     showUI(): void;
     hideUI(): void;
+    updateInteractiveBounds(bounds: { x: number; y: number; width: number; height: number; dpr: number }): void;
+    sendPetInput(data: { type: string; screenX: number; screenY: number; button?: number }): void;
+    toggleHitboxDebug(): void;
+  };
+
+  pet: {
+    setTargetMode(enabled: boolean): void;
+    moveToTarget(x: number, y: number): void;
+    cancelTarget(): void;
+    toggleLock(locked: boolean): void;
   };
 
   on: {
@@ -60,6 +72,12 @@ export interface PetAPI {
     timerTick(callback: (data: { minutes: number; seconds: number }) => void): () => void;
     timerComplete(callback: () => void): () => void;
     petModeChanged(callback: (enabled: boolean) => void): () => void;
+    hitboxDebug(callback: (enabled: boolean) => void): () => void;
+    petInput(callback: (data: { type: string; screenX: number; screenY: number; button?: number }) => void): () => void;
+    targetSet(callback: (target: { x: number; y: number }) => void): () => void;
+    targetCancelled(callback: () => void): () => void;
+    positionLocked(callback: (locked: boolean) => void): () => void;
+    targetModeActive(callback: (active: boolean) => void): () => void;
   };
 }
 

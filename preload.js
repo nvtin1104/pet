@@ -23,13 +23,32 @@ const validChannels = {
     'window:hide-ui',
     'window:toggle-pet-mode',
     'window:set-always-on-top',
-    'window:show-settings'
+    'window:show-settings',
+    // New: fullscreen pet and interactive bounds
+    'window:set-pet-fullscreen',
+    'window:update-interactive-bounds',
+    // New: input forwarded from interactive window to overlay
+    'pet:input',
+    // New: toggle debug visualization for hitbox
+    'window:toggle-hitbox-debug',
+    // New: target system
+    'pet:set-target-mode',
+    'pet:move-to-target',
+    'pet:cancel-target',
+    'pet:toggle-lock'
   ],
   on: [
     'pet:state-change',
     'timer:tick',
     'timer:complete',
-    'pet-mode-changed'
+    'pet-mode-changed',
+    // New: hitbox debug toggle
+    'pet:hitbox-debug',
+    // New: target system
+    'pet:target-set',
+    'pet:target-cancelled',
+    'pet:position-locked',
+    'pet:target-mode-active'
   ]
 };
 
@@ -65,8 +84,28 @@ contextBridge.exposeInMainWorld('petAPI', {
     // NEW: Pet mode controls
     togglePetMode: (enabled) => ipcRenderer.send('window:toggle-pet-mode', enabled),
     setAlwaysOnTop: (value) => ipcRenderer.send('window:set-always-on-top', value),
-    showSettings: () => ipcRenderer.send('window:show-settings')
+    showSettings: () => ipcRenderer.send('window:show-settings'),
+
+    // New: fullscreen pet mode + bounds
+    setPetFullscreen: (enabled) => ipcRenderer.send('window:set-pet-fullscreen', enabled),
+    updateInteractiveBounds: (bounds) => ipcRenderer.send('window:update-interactive-bounds', bounds),
+
+    // New: interactive to overlay input forwarding
+    sendPetInput: (data) => ipcRenderer.send('pet:input', data),
+
+    // New: toggle debug visualization
+    toggleHitboxDebug: () => ipcRenderer.send('window:toggle-hitbox-debug')
   },
+
+  // Pet control operations
+  pet: {
+    setTargetMode: (enabled) => ipcRenderer.send('pet:set-target-mode', enabled),
+    moveToTarget: (x, y) => ipcRenderer.send('pet:move-to-target', { x, y }),
+    cancelTarget: () => ipcRenderer.send('pet:cancel-target'),
+    toggleLock: (locked) => ipcRenderer.send('pet:toggle-lock', locked)
+  },
+
+
 
   // Event listeners (main -> renderer)
   on: {
@@ -90,8 +129,46 @@ contextBridge.exposeInMainWorld('petAPI', {
       const handler = (_, enabled) => callback(enabled);
       ipcRenderer.on('pet-mode-changed', handler);
       return () => ipcRenderer.removeListener('pet-mode-changed', handler);
+    },
+
+    // New: input forwarded from interactive window
+    petInput: (callback) => {
+      const handler = (_, data) => callback(data);
+      ipcRenderer.on('pet:input', handler);
+      return () => ipcRenderer.removeListener('pet:input', handler);
+    },
+
+    // New: hitbox debug toggle listener
+    hitboxDebug: (callback) => {
+      const handler = (_, enabled) => callback(enabled);
+      ipcRenderer.on('pet:hitbox-debug', handler);
+      return () => ipcRenderer.removeListener('pet:hitbox-debug', handler);
+    },
+
+    // New: target system listeners
+    targetSet: (callback) => {
+      const handler = (_, target) => callback(target);
+      ipcRenderer.on('pet:target-set', handler);
+      return () => ipcRenderer.removeListener('pet:target-set', handler);
+    },
+    targetCancelled: (callback) => {
+      const handler = () => callback();
+      ipcRenderer.on('pet:target-cancelled', handler);
+      return () => ipcRenderer.removeListener('pet:target-cancelled', handler);
+    },
+    positionLocked: (callback) => {
+      const handler = (_, locked) => callback(locked);
+      ipcRenderer.on('pet:position-locked', handler);
+      return () => ipcRenderer.removeListener('pet:position-locked', handler);
+    },
+    targetModeActive: (callback) => {
+      const handler = (_, active) => callback(active);
+      ipcRenderer.on('pet:target-mode-active', handler);
+      return () => ipcRenderer.removeListener('pet:target-mode-active', handler);
     }
   },
+
+
 
   // Remove all listeners for a channel
   removeAllListeners: (channel) => {

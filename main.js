@@ -10,6 +10,9 @@ let petWindow = null;       // SECONDARY - Pet overlay
 let tray = null;
 let isQuitting = false;
 
+// Debugging flags
+let petInteractiveDebug = true; // TEMPORARY: Enable debug visualization
+
 // ============================================
 // Settings Window Creation (PRIMARY)
 // ============================================
@@ -40,6 +43,7 @@ function createSettingsWindow() {
   const isDev = !app.isPackaged;
   if (isDev) {
     const devUrl = process.env.DEV_SERVER_URL || `http://localhost:${process.env.PORT || 5173}`;
+    console.log('DEV_SERVER_URL resolved for settings:', devUrl);
     settingsWindow.loadURL(`${devUrl}/src/settings/index.html`);
   } else {
     settingsWindow.loadFile(path.join(__dirname, 'dist', 'settings.html'));
@@ -108,6 +112,7 @@ function createPetWindow() {
   const isDev = !app.isPackaged;
   if (isDev) {
     const devUrl = process.env.DEV_SERVER_URL || `http://localhost:${process.env.PORT || 5173}`;
+    console.log('DEV_SERVER_URL resolved for pet:', devUrl);
     petWindow.loadURL(`${devUrl}/src/pet/index.html`);
   } else {
     petWindow.loadFile(path.join(__dirname, 'dist', 'pet.html'));
@@ -136,9 +141,271 @@ function destroyPetWindow() {
   }
 }
 
+// NEW: Fullscreen overlay + small interactive window (pet mode)
+let petOverlayWindow = null;      // FULLSCREEN visual (click-through)
+let petInteractiveWindow = null;  // SMALL interactive hit area
+
+function getDevUrl() {
+  return process.env.DEV_SERVER_URL || `http://localhost:${process.env.PORT || 5173}`;
+}
+
+function createPetOverlayWindow() {
+  if (petOverlayWindow) return;
+
+  const display = screen.getPrimaryDisplay();
+  const { width, height } = display.bounds;
+
+  petOverlayWindow = new BrowserWindow({
+    width,
+    height,
+    x: 0,
+    y: 0,
+    show: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    backgroundColor: '#00000000',
+    fullscreenable: false,
+    type: 'toolbar', // Helps with click-through on Windows
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      webSecurity: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+
+  if (!app.isPackaged) {
+    const devUrl = getDevUrl();
+    console.log('DEV_SERVER_URL resolved for pet overlay:', devUrl);
+    petOverlayWindow.loadURL(`${devUrl}/src/pet/index.html?mode=overlay`);
+  } else {
+    petOverlayWindow.loadFile(path.join(__dirname, 'dist', 'pet.html'));
+  }
+
+  // Make fully click-through so underlying windows receive events
+  petOverlayWindow.setIgnoreMouseEvents(true);
+
+  petOverlayWindow.once('ready-to-show', () => {
+    petOverlayWindow.show();
+  });
+
+  petOverlayWindow.on('closed', () => {
+    petOverlayWindow = null;
+  });
+
+  console.log('Pet overlay window created');
+}
+
+function createPetInteractiveWindow(bounds = { width: 180, height: 120, x: 100, y: 100 }) {
+  if (petInteractiveWindow) {
+    try {
+      petInteractiveWindow.setBounds(bounds);
+    } catch (e) {}
+    return;
+  }
+
+  petInteractiveWindow = new BrowserWindow({
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
+    show: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    backgroundColor: '#00000000',
+    // Remove type to allow proper mouse events on Windows
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      webSecurity: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+
+  // DON'T set ignoreMouseEvents - we need to receive clicks!
+  
+  if (!app.isPackaged) {
+    const devUrl = getDevUrl();
+    console.log('DEV_SERVER_URL resolved for pet interactive:', devUrl);
+    petInteractiveWindow.loadURL(`${devUrl}/src/pet/index.html?mode=interactive`);
+  } else {
+    petInteractiveWindow.loadFile(path.join(__dirname, 'dist', 'pet.html'));
+  }
+
+  petInteractiveWindow.once('ready-to-show', () => {
+    petInteractiveWindow.show();
+    // Inform the interactive renderer whether to show debug hitbox (env var overrides)
+    const envDebug = Boolean(process.env.PET_DEBUG_HITBOX === '1');
+    try {
+      petInteractiveWindow.webContents.send('pet:hitbox-debug', petInteractiveDebug || envDebug);
+    } catch (e) {}
+  });
+
+  petInteractiveWindow.on('closed', () => {
+    petInteractiveWindow = null;
+  });
+
+  console.log('Pet interactive window created');
+}
+
+function destroyPetOverlayWindow() {
+  if (petOverlayWindow) {
+    petOverlayWindow.close();
+    petOverlayWindow = null;
+    console.log('Pet overlay window destroyed');
+  }
+}
+
+function destroyPetInteractiveWindow() {
+  if (petInteractiveWindow) {
+    petInteractiveWindow.close();
+    petInteractiveWindow = null;
+    console.log('Pet interactive window destroyed');
+  }
+}
+
+function updateInteractiveWindowBounds(bounds) {
+  // Expecting CSS pixels + dpr (from renderer)
+  if (!bounds) return;
+  const cssX = bounds.x;
+  const cssY = bounds.y;
+  const cssW = bounds.width;
+  const cssH = bounds.height;
+  const dpr = bounds.dpr || 1;
+
+  // Find the display for the CSS point
+  const display = screen.getDisplayNearestPoint({ x: Math.round(cssX), y: Math.round(cssY) });
+  const scale = display ? (display.scaleFactor || 1) : 1;
+
+  // Convert CSS pixels -> physical pixels using display scale factor
+  // Use minimum 40px for smaller, tighter hitbox
+  const physX = Math.round(cssX * scale);
+  const physY = Math.round(cssY * scale);
+  const physW = Math.max(40, Math.round(cssW * scale));
+  const physH = Math.max(40, Math.round(cssH * scale));
+
+  if (petInteractiveWindow) {
+    try {
+      petInteractiveWindow.setBounds({ x: physX, y: physY, width: physW, height: physH });
+    } catch (e) {
+      console.warn('setBounds failed', e);
+    }
+  }
+}
+
 // ============================================
 // IPC Handlers - Window Control
 // ============================================
+
+// Pet mode passthrough control (keep backward compatible)
+ipcMain.on('window:toggle-pet-mode', (event, enabled) => {
+  if (enabled) {
+    // Create both windows for fullscreen visual + interactive hitbox
+    createPetOverlayWindow();
+    createPetInteractiveWindow();
+  } else {
+    destroyPetOverlayWindow();
+    destroyPetInteractiveWindow();
+  }
+  // Notify all windows about the change
+  if (settingsWindow) {
+    settingsWindow.webContents.send('pet-mode-changed', enabled);
+  }
+  updateTrayMenu();
+});
+
+// New: Set pet fullscreen explicitly
+ipcMain.on('window:set-pet-fullscreen', (event, enabled) => {
+  if (enabled) {
+    createPetOverlayWindow();
+    createPetInteractiveWindow();
+  } else {
+    destroyPetOverlayWindow();
+    destroyPetInteractiveWindow();
+  }
+  if (settingsWindow) settingsWindow.webContents.send('pet-mode-changed', enabled);
+  updateTrayMenu();
+});
+
+// Update interactive window bounds from renderer (overlay can push bounds)
+ipcMain.on('window:update-interactive-bounds', (event, bounds) => {
+  updateInteractiveWindowBounds(bounds);
+});
+
+// Toggle debug visualization of the interactive hitbox at runtime
+ipcMain.on('window:toggle-hitbox-debug', () => {
+  petInteractiveDebug = !petInteractiveDebug;
+  if (petInteractiveWindow && petInteractiveWindow.webContents) {
+    petInteractiveWindow.webContents.send('pet:hitbox-debug', petInteractiveDebug);
+  }
+});
+
+// Forward input from interactive window to overlay window
+ipcMain.on('pet:input', (event, data) => {
+  if (petOverlayWindow && petOverlayWindow.webContents) {
+    petOverlayWindow.webContents.send('pet:input', data);
+  }
+});
+
+// Target system state
+let targetModeActive = false;
+let attackTarget = null;
+let positionLocked = false;
+
+// Enable target selection mode
+ipcMain.on('pet:set-target-mode', (event, enabled) => {
+  targetModeActive = enabled;
+  console.log('Target mode:', enabled ? 'enabled' : 'disabled');
+  
+  // When target mode is active, next click will set the target
+  if (enabled && petOverlayWindow) {
+    petOverlayWindow.webContents.send('pet:target-mode-active', true);
+  }
+});
+
+// Set attack target and trigger pet movement
+ipcMain.on('pet:move-to-target', (event, target) => {
+  attackTarget = target;
+  targetModeActive = false;
+  console.log('Attack target set:', target);
+  
+  // Notify overlay window to animate pet to target
+  if (petOverlayWindow && petOverlayWindow.webContents) {
+    petOverlayWindow.webContents.send('pet:target-set', target);
+  }
+});
+
+// Cancel target selection
+ipcMain.on('pet:cancel-target', () => {
+  targetModeActive = false;
+  attackTarget = null;
+  console.log('Target cancelled');
+  
+  if (petOverlayWindow && petOverlayWindow.webContents) {
+    petOverlayWindow.webContents.send('pet:target-cancelled');
+  }
+});
+
+// Toggle position lock
+ipcMain.on('pet:toggle-lock', (event, locked) => {
+  positionLocked = locked;
+  console.log('Position lock:', locked);
+  
+  // Notify overlay to enable/disable dragging
+  if (petOverlayWindow && petOverlayWindow.webContents) {
+    petOverlayWindow.webContents.send('pet:position-locked', locked);
+  }
+});
 
 let isPassthroughEnabled = true;
 
@@ -369,10 +636,16 @@ app.whenReady().then(async () => {
     // Create settings window (primary)
     createSettingsWindow();
 
-    // Check if pet mode was enabled - create pet window if so
-    const settings = SettingsDB.getAll();
-    if (settings.petModeEnabled) {
-      createPetWindow();
+    // Enable fullscreen pet mode by default
+    createPetOverlayWindow();
+    createPetInteractiveWindow();
+    
+    // Save default state to settings
+    try {
+      SettingsDB.set('petModeEnabled', true);
+      SettingsDB.set('petFullscreenMode', true);
+    } catch (e) {
+      console.warn('Failed to save default pet mode settings:', e);
     }
   } catch (error) {
     console.error('Failed to initialize app:', error);
@@ -454,9 +727,11 @@ function updateTrayMenu() {
         SettingsDB.set('petModeEnabled', enabled);
 
         if (enabled) {
-          createPetWindow();
+          createPetOverlayWindow();
+          createPetInteractiveWindow();
         } else {
-          destroyPetWindow();
+          destroyPetOverlayWindow();
+          destroyPetInteractiveWindow();
         }
 
         // Notify settings window
@@ -467,21 +742,25 @@ function updateTrayMenu() {
     },
     {
       label: 'Show Pet',
-      enabled: petModeEnabled && petWindow !== null,
+      enabled: petModeEnabled && (petOverlayWindow !== null || petInteractiveWindow !== null),
       click: () => {
-        if (petWindow) {
-          petWindow.show();
-          petWindow.focus();
-          petWindow.webContents.invalidate();
+        if (petOverlayWindow) {
+          petOverlayWindow.show();
+        }
+        if (petInteractiveWindow) {
+          petInteractiveWindow.show();
         }
       }
     },
     {
       label: 'Hide Pet',
-      enabled: petModeEnabled && petWindow !== null,
+      enabled: petModeEnabled && (petOverlayWindow !== null || petInteractiveWindow !== null),
       click: () => {
-        if (petWindow) {
-          petWindow.hide();
+        if (petOverlayWindow) {
+          petOverlayWindow.hide();
+        }
+        if (petInteractiveWindow) {
+          petInteractiveWindow.hide();
         }
       }
     },
@@ -490,11 +769,9 @@ function updateTrayMenu() {
       label: 'Reset Pet Position',
       enabled: petModeEnabled,
       click: () => {
-        if (petWindow) {
-          const display = screen.getPrimaryDisplay();
-          const { width, height } = display.workAreaSize;
-          petWindow.setPosition(width - 220, height - 300);
-          petWindow.show();
+        // Send reset signal to overlay window
+        if (petOverlayWindow && petOverlayWindow.webContents) {
+          petOverlayWindow.webContents.send('pet:reset-position');
         }
       }
     },
