@@ -12,7 +12,7 @@
     >
       <div class="menu-item" @click="handleSetTarget">
         <Target class="icon" :size="16" />
-        <span>Set Attack Target</span>
+        <span>Attack Random Target</span>
       </div>
       <div class="menu-divider"></div>
       <div class="menu-item" @click="handleOpenSettings">

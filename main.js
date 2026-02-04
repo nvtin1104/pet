@@ -274,6 +274,9 @@ function destroyPetInteractiveWindow() {
   }
 }
 
+// Track last bounds received from overlay for restoration after expand/shrink
+let lastOverlayBounds = null;
+
 function updateInteractiveWindowBounds(bounds) {
   // Expecting CSS pixels + dpr (from renderer)
   if (!bounds) return;
@@ -281,7 +284,6 @@ function updateInteractiveWindowBounds(bounds) {
   const cssY = bounds.y;
   const cssW = bounds.width;
   const cssH = bounds.height;
-  const dpr = bounds.dpr || 1;
 
   // Find the display for the CSS point
   const display = screen.getDisplayNearestPoint({ x: Math.round(cssX), y: Math.round(cssY) });
@@ -294,9 +296,14 @@ function updateInteractiveWindowBounds(bounds) {
   const physW = Math.max(40, Math.round(cssW * scale));
   const physH = Math.max(40, Math.round(cssH * scale));
 
+  const newBounds = { x: physX, y: physY, width: physW, height: physH };
+
+  // Always save bounds for restoration after expand/shrink
+  lastOverlayBounds = newBounds;
+
   if (petInteractiveWindow) {
     try {
-      petInteractiveWindow.setBounds({ x: physX, y: physY, width: physW, height: physH });
+      petInteractiveWindow.setBounds(newBounds);
     } catch (e) {
       console.warn('setBounds failed', e);
     }
@@ -345,7 +352,7 @@ ipcMain.on('window:update-interactive-bounds', (event, bounds) => {
 // Expand interactive window to fullscreen during drag (to catch fast mouse moves)
 ipcMain.on('window:expand-interactive-for-drag', (event, expand) => {
   if (!petInteractiveWindow) return;
-  
+
   if (expand) {
     const display = screen.getPrimaryDisplay();
     const { width, height } = display.bounds;
@@ -355,8 +362,17 @@ ipcMain.on('window:expand-interactive-for-drag', (event, expand) => {
     } catch (e) {
       console.warn('Failed to expand interactive window:', e);
     }
+  } else {
+    // Restore to last known overlay bounds (set by updateInteractiveWindowBounds)
+    if (lastOverlayBounds) {
+      try {
+        petInteractiveWindow.setBounds(lastOverlayBounds);
+        console.log('Interactive window restored to overlay bounds');
+      } catch (e) {
+        console.warn('Failed to restore interactive window:', e);
+      }
+    }
   }
-  // When expand is false, bounds will be restored by next update-interactive-bounds call
 });
 
 // Toggle debug visualization of the interactive hitbox at runtime

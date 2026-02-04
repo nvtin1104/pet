@@ -14,14 +14,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import PetCanvas from './components/PetCanvas.vue';
 import PetContextMenu from './components/PetContextMenu.vue';
 
 const contextMenuVisible = ref(false);
 const contextMenuPosition = ref({ x: 0, y: 0 });
 const positionLocked = ref(false);
-const targetMode = ref(false);
 
 function handleShowContextMenu(position) {
   contextMenuPosition.value = position;
@@ -44,56 +43,21 @@ function handleCloseContextMenu() {
 }
 
 function handleSetTarget() {
-  // Enable target selection mode
-  targetMode.value = true;
-  console.log('Target mode enabled - click anywhere to set attack target');
-  
-  // Change cursor to crosshair
-  document.body.style.cursor = 'crosshair';
+  // Generate a random target position on screen
+  const screenWidth = window.screen.availWidth || window.innerWidth;
+  const screenHeight = window.screen.availHeight || window.innerHeight;
 
-  // Listen for next click to set target
-  const handleTargetClick = (e) => {
-    if (targetMode.value) {
-      // Get screen coordinates for target
-      const target = { 
-        x: window.screenX + e.clientX, 
-        y: window.screenY + e.clientY 
-      };
-      
-      // Send target to overlay via IPC
-      if (window.petAPI && window.petAPI.pet && window.petAPI.pet.moveToTarget) {
-        window.petAPI.pet.moveToTarget(target.x, target.y);
-      }
-      
-      // Also dispatch local event for same-window handling
-      window.dispatchEvent(new CustomEvent('pet-attack-target', { 
-        detail: { x: e.clientX, y: e.clientY } 
-      }));
-      
-      targetMode.value = false;
-      document.body.style.cursor = '';
-      window.removeEventListener('click', handleTargetClick);
-      console.log('Target set:', target);
-    }
-  };
-  
-  // Cancel on right-click or Escape
-  const handleCancel = (e) => {
-    if (e.type === 'contextmenu' || e.key === 'Escape') {
-      targetMode.value = false;
-      document.body.style.cursor = '';
-      window.removeEventListener('click', handleTargetClick);
-      window.removeEventListener('contextmenu', handleCancel);
-      window.removeEventListener('keydown', handleCancel);
-      console.log('Target mode cancelled');
-    }
-  };
+  // Random position with some padding from edges
+  const padding = 100;
+  const targetX = padding + Math.random() * (screenWidth - padding * 2);
+  const targetY = padding + Math.random() * (screenHeight - padding * 2);
 
-  setTimeout(() => {
-    window.addEventListener('click', handleTargetClick);
-    window.addEventListener('contextmenu', handleCancel);
-    window.addEventListener('keydown', handleCancel);
-  }, 100);
+  console.log('Random target generated:', { x: targetX, y: targetY });
+
+  // Send target to overlay via IPC (screen coordinates)
+  if (window.petAPI && window.petAPI.pet && window.petAPI.pet.moveToTarget) {
+    window.petAPI.pet.moveToTarget(targetX, targetY);
+  }
 }
 
 function handleOpenSettings() {
@@ -112,15 +76,6 @@ function handleToggleLock() {
   }
 }
 
-onMounted(() => {
-  // Listen for target mode activation from IPC
-  if (window.petAPI && window.petAPI.on && window.petAPI.on.targetModeActive) {
-    window.petAPI.on.targetModeActive((active) => {
-      targetMode.value = active;
-      console.log('Target mode from IPC:', active);
-    });
-  }
-});
 </script>
 
 <style scoped>

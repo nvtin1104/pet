@@ -23,14 +23,11 @@ let behaviorTimer = null;
 let pollInterval = null;
 const handleMenuClosed = () => {
   pet.contextMenuOpen = false;
-  // Restore interactive window to normal size (triggers bounds update)
-  if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
-    window.petAPI.window.expandInteractiveForDrag(false);
-  }
-  // Force send current bounds to restore hitbox position
-  setTimeout(() => {
+  // Only overlay should send bounds update - interactive window handles shrinking via App.vue
+  if (mode === 'overlay') {
+    // Force send current bounds immediately to restore hitbox position
     sendInteractiveBoundsIfNeeded(true);
-  }, 50);
+  }
 };
 
 const FRAME_WIDTH = 120;
@@ -538,9 +535,9 @@ function bindEvents() {
         }
         recentMoves = [];
 
-        // One last bounds update on release
-        sendInteractiveBoundsIfNeeded();
-        
+        // Force send bounds update on release (not throttled)
+        sendInteractiveBoundsIfNeeded(true);
+
         // Restore interactive window to normal size
         if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
           window.petAPI.window.expandInteractiveForDrag(false);
@@ -610,7 +607,10 @@ function bindEvents() {
     };
     const contextmenu = (e) => {
       e.preventDefault();
-      // Handle context menu locally in interactive window - DON'T forward to overlay
+      // Calculate screen position BEFORE expansion (for correct menu placement)
+      const screenX = window.screenX + e.clientX;
+      const screenY = window.screenY + e.clientY;
+
       // Expand window to fullscreen so menu clicks work
       if (window.petAPI?.window?.expandInteractiveForDrag) {
         window.petAPI.window.expandInteractiveForDrag(true);
@@ -619,8 +619,11 @@ function bindEvents() {
       if (window.petAPI?.pet?.setContextMenuState) {
         window.petAPI.pet.setContextMenuState(true);
       }
-      // Show menu locally in this window
-      emit('show-context-menu', { x: e.clientX, y: e.clientY });
+      // Wait for window expansion, then show menu at screen position
+      // (after expansion, window is at 0,0 so screen coords = client coords)
+      setTimeout(() => {
+        emit('show-context-menu', { x: screenX, y: screenY });
+      }, 50);
     };
 
     containerEl.addEventListener('mousedown', mousedown);
@@ -765,6 +768,10 @@ onMounted(async () => {
       window.petAPI.on.contextMenuState((open) => {
         pet.contextMenuOpen = open;
         console.log('Context menu state (from interactive):', open);
+        // When menu closes, send updated bounds immediately to restore hitbox position
+        if (!open) {
+          sendInteractiveBoundsIfNeeded(true);
+        }
       });
     }
   }
