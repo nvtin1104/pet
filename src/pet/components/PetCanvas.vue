@@ -23,6 +23,14 @@ let behaviorTimer = null;
 let pollInterval = null;
 const handleMenuClosed = () => {
   pet.contextMenuOpen = false;
+  // Restore interactive window to normal size (triggers bounds update)
+  if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
+    window.petAPI.window.expandInteractiveForDrag(false);
+  }
+  // Force send current bounds to restore hitbox position
+  setTimeout(() => {
+    sendInteractiveBoundsIfNeeded(true);
+  }, 50);
 };
 
 const FRAME_WIDTH = 120;
@@ -272,17 +280,37 @@ function draw(timestamp) {
     // dt in ms, velocities are pixels/sec
     const dx = pet.vx * (dt / 1000);
     const dy = pet.vy * (dt / 1000);
-    pet.x = Math.max(0, Math.min(window.innerWidth - FRAME_WIDTH * SPRITE_SCALE, pet.x + dx));
-    pet.y = Math.max(0, Math.min(window.innerHeight - FRAME_HEIGHT * SPRITE_SCALE, pet.y + dy));
-
-    // Apply friction
-    const friction = 0.95;
-    pet.vx *= friction;
-    pet.vy *= friction;
-
-    // If velocities are very small, zero them
-    if (Math.abs(pet.vx) < 0.5) pet.vx = 0;
-    if (Math.abs(pet.vy) < 0.5) pet.vy = 0;
+    const newX = pet.x + dx;
+    const newY = pet.y + dy;
+    
+    // Clamp to screen bounds
+    const minX = 0;
+    const maxX = window.innerWidth - FRAME_WIDTH * SPRITE_SCALE;
+    const minY = 0;
+    const maxY = window.innerHeight - FRAME_HEIGHT * SPRITE_SCALE;
+    
+    pet.x = Math.max(minX, Math.min(maxX, newX));
+    pet.y = Math.max(minY, Math.min(maxY, newY));
+    
+    // If hit screen edge while running autonomously, reverse direction
+    if (pet.state === STATES.RUN && !pet.isDragging) {
+      if (newX <= minX || newX >= maxX) {
+        pet.direction *= -1;
+        pet.vx *= -1;
+      }
+      if (newY <= minY || newY >= maxY) {
+        pet.vy *= -1;
+      }
+    } else {
+      // Apply friction only when not in autonomous RUN state (e.g., after throw)
+      const friction = 0.95;
+      pet.vx *= friction;
+      pet.vy *= friction;
+      
+      // If velocities are very small, zero them
+      if (Math.abs(pet.vx) < 0.5) pet.vx = 0;
+      if (Math.abs(pet.vy) < 0.5) pet.vy = 0;
+    }
 
     // Report interactive bounds so main can reposition the small interactive window
     sendInteractiveBoundsIfNeeded();
@@ -327,16 +355,33 @@ function setState(newState) {
 
 function startBehavior() {
   const scheduleNextBehavior = () => {
-    const delay = 5000 + Math.random() * 10000;
+    const delay = 3000 + Math.random() * 5000; // More frequent behavior changes
     behaviorTimer = setTimeout(() => {
+      // Don't change behavior if dragging, menu open, moving to target, or locked
+      if (pet.isDragging || pet.contextMenuOpen || pet.movingToTarget || pet.locked) {
+        scheduleNextBehavior();
+        return;
+      }
+      
       const rand = Math.random();
-      if (rand < 0.6) {
+      if (rand < 0.3) {
+        // 30% chance: Idle
         setState(STATES.IDLE);
-      } else if (rand < 0.9) {
+        pet.vx = 0;
+        pet.vy = 0;
+      } else if (rand < 0.85) {
+        // 55% chance: Run to random position
         setState(STATES.RUN);
         pet.direction = Math.random() > 0.5 ? 1 : -1;
+        // Set velocity to move in direction
+        const speed = 80 + Math.random() * 120; // 80-200 pixels/sec
+        pet.vx = pet.direction * speed;
+        pet.vy = (Math.random() - 0.5) * 60; // Small vertical movement
       } else {
+        // 15% chance: Sleep
         setState(STATES.SLEEP);
+        pet.vx = 0;
+        pet.vy = 0;
       }
       scheduleNextBehavior();
     }, delay);
@@ -350,9 +395,11 @@ function onPetClick(isRightClick = false, position = null) {
     // Right-click shows context menu
     pet.contextMenuOpen = true;
     pet.isDragging = false;
-    // Disable passthrough while menu is open
-    if (window.petAPI && window.petAPI.window && window.petAPI.window.togglePassthrough) {
-      window.petAPI.window.togglePassthrough(false);
+    pet.vx = 0;
+    pet.vy = 0;
+    // Expand interactive window to fullscreen so menu clicks work
+    if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
+      window.petAPI.window.expandInteractiveForDrag(true);
     }
     const menuPos = position || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     emit('show-context-menu', menuPos);
@@ -374,27 +421,26 @@ function onPetDoubleClick() {
   window.petAPI.window.showSettings();
 }
 
-// Hitbox padding / minimum size (in CSS pixels) - reduced for precision
-const HITBOX_PADDING = 3;
-const MIN_HITBOX = 40;
+// Hitbox configuration - adjustable for future customization
+const HITBOX_CONFIG = {
+  minSize: 30,        // Minimum hitbox dimension
+  topPadding: 0,      // Padding above sprite
+  sidePadding: 0,     // Padding on left/right
+  bottomPadding: 2    // Padding below sprite (for ground contact)
+};
 let _lastBoundsSentAt = 0; // throttle
 
 function computeCssBounds() {
   const cssX = Math.round(window.screenX + pet.x);
   const cssY = Math.round(window.screenY + pet.y);
-  const cssW = Math.max(MIN_HITBOX, Math.round(FRAME_WIDTH * SPRITE_SCALE));
-  const cssH = Math.max(MIN_HITBOX, Math.round(FRAME_HEIGHT * SPRITE_SCALE));
-
-  // Asymmetric padding: smaller on top and sides, larger on bottom
-  const topPadding = 1;
-  const sidePadding = 1; 
-  const bottomPadding = 5;
+  const cssW = Math.max(HITBOX_CONFIG.minSize, Math.round(FRAME_WIDTH * SPRITE_SCALE));
+  const cssH = Math.max(HITBOX_CONFIG.minSize, Math.round(FRAME_HEIGHT * SPRITE_SCALE));
 
   const padded = {
-    x: Math.round(cssX - sidePadding),
-    y: Math.round(cssY - topPadding),
-    width: cssW + sidePadding * 2,
-    height: cssH + topPadding + bottomPadding
+    x: Math.round(cssX - HITBOX_CONFIG.sidePadding),
+    y: Math.round(cssY - HITBOX_CONFIG.topPadding),
+    width: cssW + HITBOX_CONFIG.sidePadding * 2,
+    height: cssH + HITBOX_CONFIG.topPadding + HITBOX_CONFIG.bottomPadding
   };
 
   // Clamp to screen
@@ -424,7 +470,6 @@ function sendInteractiveBoundsIfNeeded(force = false) {
 
 function bindEvents() {
   // Keep track of recent mouse positions to compute release velocity
-  let isDragging = false;
   let dragOffset = { x: 0, y: 0 };
   let recentMoves = []; // {x,y,t}
 
@@ -443,16 +488,20 @@ function bindEvents() {
 
     if (type === 'mousedown') {
       if (button === 0 && !pet.contextMenuOpen && isOnPetSpriteCoords(localX, localY) && !pet.locked) {
-        isDragging = true;
         pet.isDragging = true;
         dragOffset.x = (FRAME_WIDTH * SPRITE_SCALE) / 2;
         dragOffset.y = (FRAME_HEIGHT * SPRITE_SCALE) / 2;
         document.body.style.cursor = 'grabbing';
         recentMoves = [{ x: localX, y: localY, t: performance.now() }];
         setState(STATES.WALL_SLIDE);
+        
+        // Expand interactive window to fullscreen to catch fast drags
+        if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
+          window.petAPI.window.expandInteractiveForDrag(true);
+        }
       }
     } else if (type === 'mousemove') {
-      if (isDragging && !pet.locked && !pet.contextMenuOpen) {
+      if (pet.isDragging && !pet.locked && !pet.contextMenuOpen) {
         const screenW = window.innerWidth;
         const screenH = window.innerHeight;
         let newX = localX - dragOffset.x;
@@ -469,27 +518,52 @@ function bindEvents() {
         sendInteractiveBoundsIfNeeded();
       }
     } else if (type === 'mouseup') {
-      if (isDragging) {
-        isDragging = false;
+      // Only process throw if was dragging and menu is not open
+      if (pet.isDragging && !pet.contextMenuOpen) {
         pet.isDragging = false;
         document.body.style.cursor = '';
         setState(STATES.IDLE);
-        // Compute velocity from recent moves
+        // Compute velocity from recent moves - only throw if actually dragged
         if (recentMoves.length >= 2 && !pet.locked) {
           const a = recentMoves[0];
           const b = recentMoves[recentMoves.length - 1];
           const dt = Math.max(1, b.t - a.t);
-          pet.vx = (b.x - a.x) / dt * 1000; // pixels/sec
-          pet.vy = (b.y - a.y) / dt * 1000;
+          // Only apply throw velocity if there was significant movement
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            pet.vx = dx / dt * 1000; // pixels/sec
+            pet.vy = dy / dt * 1000;
+          }
         }
         recentMoves = [];
 
         // One last bounds update on release
         sendInteractiveBoundsIfNeeded();
+        
+        // Restore interactive window to normal size
+        if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
+          window.petAPI.window.expandInteractiveForDrag(false);
+        }
+      } else if (pet.isDragging && pet.contextMenuOpen) {
+        // Menu opened during drag - cancel drag without throw
+        pet.isDragging = false;
+        document.body.style.cursor = '';
+        recentMoves = [];
       }
     } else if (type === 'click') {
       if (button === 0 && isOnPetSpriteCoords(localX, localY)) onPetClick(false);
     } else if (type === 'contextmenu') {
+      // Cancel any drag and clear recentMoves before showing menu
+      if (pet.isDragging) {
+        pet.isDragging = false;
+        document.body.style.cursor = '';
+        recentMoves = [];
+        // Restore interactive window
+        if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
+          window.petAPI.window.expandInteractiveForDrag(false);
+        }
+      }
       if (isOnPetSpriteCoords(localX, localY)) {
         onPetClick(true, { x: localX, y: localY });
       }
@@ -507,15 +581,26 @@ function bindEvents() {
   if (mode === 'interactive') {
     const containerEl = container.value;
     const toScreen = (e) => ({ screenX: window.screenX + e.clientX, screenY: window.screenY + e.clientY });
+    let interactiveDragging = false;
 
     const mousedown = (e) => {
+      if (e.button === 0) {
+        interactiveDragging = true;
+      }
       window.petAPI.window.sendPetInput({ type: 'mousedown', button: e.button, ...toScreen(e) });
     };
+    
+    // Use document for mousemove/mouseup to catch events even when cursor leaves window
     const mousemove = (e) => {
-      window.petAPI.window.sendPetInput({ type: 'mousemove', button: e.button, ...toScreen(e) });
+      if (interactiveDragging) {
+        window.petAPI.window.sendPetInput({ type: 'mousemove', button: e.button, ...toScreen(e) });
+      }
     };
     const mouseup = (e) => {
-      window.petAPI.window.sendPetInput({ type: 'mouseup', button: e.button, ...toScreen(e) });
+      if (interactiveDragging) {
+        interactiveDragging = false;
+        window.petAPI.window.sendPetInput({ type: 'mouseup', button: e.button, ...toScreen(e) });
+      }
     };
     const click = (e) => {
       window.petAPI.window.sendPetInput({ type: 'click', button: e.button, ...toScreen(e) });
@@ -525,20 +610,31 @@ function bindEvents() {
     };
     const contextmenu = (e) => {
       e.preventDefault();
-      window.petAPI.window.sendPetInput({ type: 'contextmenu', button: e.button, ...toScreen(e) });
+      // Handle context menu locally in interactive window - DON'T forward to overlay
+      // Expand window to fullscreen so menu clicks work
+      if (window.petAPI?.window?.expandInteractiveForDrag) {
+        window.petAPI.window.expandInteractiveForDrag(true);
+      }
+      // Notify overlay that menu is open (pause pet behavior)
+      if (window.petAPI?.pet?.setContextMenuState) {
+        window.petAPI.pet.setContextMenuState(true);
+      }
+      // Show menu locally in this window
+      emit('show-context-menu', { x: e.clientX, y: e.clientY });
     };
 
     containerEl.addEventListener('mousedown', mousedown);
-    containerEl.addEventListener('mousemove', mousemove);
-    containerEl.addEventListener('mouseup', mouseup);
+    // Attach mousemove/mouseup to document to catch events outside container
+    document.addEventListener('mousemove', mousemove);
+    document.addEventListener('mouseup', mouseup);
     containerEl.addEventListener('click', click);
     containerEl.addEventListener('dblclick', dblclick);
     containerEl.addEventListener('contextmenu', contextmenu);
 
     return () => {
       containerEl.removeEventListener('mousedown', mousedown);
-      containerEl.removeEventListener('mousemove', mousemove);
-      containerEl.removeEventListener('mouseup', mouseup);
+      document.removeEventListener('mousemove', mousemove);
+      document.removeEventListener('mouseup', mouseup);
       containerEl.removeEventListener('click', click);
       containerEl.removeEventListener('dblclick', dblclick);
       containerEl.removeEventListener('contextmenu', contextmenu);
@@ -640,10 +736,11 @@ onMounted(async () => {
   if (window.petAPI && window.petAPI.on) {
     if (window.petAPI.on.targetSet) {
       window.petAPI.on.targetSet((target) => {
-        pet.targetX = target.x;
-        pet.targetY = target.y;
+        // Convert screen coords to local coords
+        pet.targetX = target.x - window.screenX;
+        pet.targetY = target.y - window.screenY;
         pet.movingToTarget = true;
-        console.log('Moving to target:', target);
+        console.log('Moving to target (IPC):', pet.targetX, pet.targetY);
       });
     }
 
@@ -662,7 +759,25 @@ onMounted(async () => {
         console.log('Position locked:', locked);
       });
     }
+
+    // Listen for context menu state from interactive window (overlay mode only)
+    if (mode === 'overlay' && window.petAPI.on.contextMenuState) {
+      window.petAPI.on.contextMenuState((open) => {
+        pet.contextMenuOpen = open;
+        console.log('Context menu state (from interactive):', open);
+      });
+    }
   }
+
+  // Listen for local target attack event (same-window)
+  const handleAttackTarget = (e) => {
+    const target = e.detail;
+    pet.targetX = target.x;
+    pet.targetY = target.y;
+    pet.movingToTarget = true;
+    console.log('Moving to target (local):', pet.targetX, pet.targetY);
+  };
+  window.addEventListener('pet-attack-target', handleAttackTarget);
 
   window.addEventListener('pet-context-menu-closed', handleMenuClosed);
 

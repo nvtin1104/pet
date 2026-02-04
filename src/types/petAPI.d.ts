@@ -58,6 +58,7 @@ export interface PetAPI {
     updateInteractiveBounds(bounds: { x: number; y: number; width: number; height: number; dpr: number }): void;
     sendPetInput(data: { type: string; screenX: number; screenY: number; button?: number }): void;
     toggleHitboxDebug(): void;
+    expandInteractiveForDrag(expand: boolean): void;
   };
 
   pet: {
@@ -65,6 +66,7 @@ export interface PetAPI {
     moveToTarget(x: number, y: number): void;
     cancelTarget(): void;
     toggleLock(locked: boolean): void;
+    setContextMenuState(open: boolean): void;
   };
 
   on: {
@@ -78,6 +80,7 @@ export interface PetAPI {
     targetCancelled(callback: () => void): () => void;
     positionLocked(callback: (locked: boolean) => void): () => void;
     targetModeActive(callback: (active: boolean) => void): () => void;
+    contextMenuState(callback: (open: boolean) => void): () => void;
   };
 }
 

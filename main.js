@@ -11,7 +11,7 @@ let tray = null;
 let isQuitting = false;
 
 // Debugging flags
-let petInteractiveDebug = true; // TEMPORARY: Enable debug visualization
+let petInteractiveDebug = false; // Debug disabled by default
 
 // ============================================
 // Settings Window Creation (PRIMARY)
@@ -342,6 +342,23 @@ ipcMain.on('window:update-interactive-bounds', (event, bounds) => {
   updateInteractiveWindowBounds(bounds);
 });
 
+// Expand interactive window to fullscreen during drag (to catch fast mouse moves)
+ipcMain.on('window:expand-interactive-for-drag', (event, expand) => {
+  if (!petInteractiveWindow) return;
+  
+  if (expand) {
+    const display = screen.getPrimaryDisplay();
+    const { width, height } = display.bounds;
+    try {
+      petInteractiveWindow.setBounds({ x: 0, y: 0, width, height });
+      console.log('Interactive window expanded for drag');
+    } catch (e) {
+      console.warn('Failed to expand interactive window:', e);
+    }
+  }
+  // When expand is false, bounds will be restored by next update-interactive-bounds call
+});
+
 // Toggle debug visualization of the interactive hitbox at runtime
 ipcMain.on('window:toggle-hitbox-debug', () => {
   petInteractiveDebug = !petInteractiveDebug;
@@ -400,10 +417,18 @@ ipcMain.on('pet:cancel-target', () => {
 ipcMain.on('pet:toggle-lock', (event, locked) => {
   positionLocked = locked;
   console.log('Position lock:', locked);
-  
+
   // Notify overlay to enable/disable dragging
   if (petOverlayWindow && petOverlayWindow.webContents) {
     petOverlayWindow.webContents.send('pet:position-locked', locked);
+  }
+});
+
+// Forward context menu state from interactive window to overlay
+ipcMain.on('pet:context-menu-state', (event, open) => {
+  console.log('Context menu state:', open);
+  if (petOverlayWindow && petOverlayWindow.webContents) {
+    petOverlayWindow.webContents.send('pet:context-menu-state', open);
   }
 });
 

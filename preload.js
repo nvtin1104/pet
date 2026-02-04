@@ -27,6 +27,8 @@ const validChannels = {
     // New: fullscreen pet and interactive bounds
     'window:set-pet-fullscreen',
     'window:update-interactive-bounds',
+    // New: expand interactive for fast drag
+    'window:expand-interactive-for-drag',
     // New: input forwarded from interactive window to overlay
     'pet:input',
     // New: toggle debug visualization for hitbox
@@ -35,7 +37,9 @@ const validChannels = {
     'pet:set-target-mode',
     'pet:move-to-target',
     'pet:cancel-target',
-    'pet:toggle-lock'
+    'pet:toggle-lock',
+    // Context menu state sync between interactive and overlay windows
+    'pet:context-menu-state'
   ],
   on: [
     'pet:state-change',
@@ -48,7 +52,9 @@ const validChannels = {
     'pet:target-set',
     'pet:target-cancelled',
     'pet:position-locked',
-    'pet:target-mode-active'
+    'pet:target-mode-active',
+    // Context menu state from interactive window
+    'pet:context-menu-state'
   ]
 };
 
@@ -90,6 +96,9 @@ contextBridge.exposeInMainWorld('petAPI', {
     setPetFullscreen: (enabled) => ipcRenderer.send('window:set-pet-fullscreen', enabled),
     updateInteractiveBounds: (bounds) => ipcRenderer.send('window:update-interactive-bounds', bounds),
 
+    // New: expand interactive window for drag (to catch fast mouse moves)
+    expandInteractiveForDrag: (expand) => ipcRenderer.send('window:expand-interactive-for-drag', expand),
+
     // New: interactive to overlay input forwarding
     sendPetInput: (data) => ipcRenderer.send('pet:input', data),
 
@@ -102,7 +111,9 @@ contextBridge.exposeInMainWorld('petAPI', {
     setTargetMode: (enabled) => ipcRenderer.send('pet:set-target-mode', enabled),
     moveToTarget: (x, y) => ipcRenderer.send('pet:move-to-target', { x, y }),
     cancelTarget: () => ipcRenderer.send('pet:cancel-target'),
-    toggleLock: (locked) => ipcRenderer.send('pet:toggle-lock', locked)
+    toggleLock: (locked) => ipcRenderer.send('pet:toggle-lock', locked),
+    // Context menu state sync
+    setContextMenuState: (open) => ipcRenderer.send('pet:context-menu-state', open)
   },
 
 
@@ -165,6 +176,12 @@ contextBridge.exposeInMainWorld('petAPI', {
       const handler = (_, active) => callback(active);
       ipcRenderer.on('pet:target-mode-active', handler);
       return () => ipcRenderer.removeListener('pet:target-mode-active', handler);
+    },
+    // Context menu state from interactive window
+    contextMenuState: (callback) => {
+      const handler = (_, open) => callback(open);
+      ipcRenderer.on('pet:context-menu-state', handler);
+      return () => ipcRenderer.removeListener('pet:context-menu-state', handler);
     }
   },
 

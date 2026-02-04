@@ -6,50 +6,118 @@ PetFocus is an Electron desktop pet + productivity app. You are working on the `
 
 **Tech Stack:** Electron 40.x, Vue 3, Vite, Tailwind CSS, TypeScript, sql.js, Canvas (Pet)
 
+## Project Structure
+
+```
+pet/
+├── main.js                 # Electron main process, IPC handlers, window management
+├── preload.js              # contextBridge API, IPC whitelist
+├── vite.config.js          # Vite build config (pet + settings entry points)
+├── package.json
+├── tsconfig.json
+│
+├── database/               # SQLite database layer (main process only)
+│   ├── index.js            # Exports all DB modules
+│   ├── db.js               # sql.js init, migrations
+│   ├── todos.js            # Todo CRUD
+│   ├── subscriptions.js    # Subscription CRUD
+│   └── settings.js         # Key-value settings store
+│
+├── src/
+│   ├── pet/                # Pet Vue app (overlay + interactive windows)
+│   │   ├── index.html      # Entry HTML with CSP
+│   │   ├── main.ts         # Vue app bootstrap
+│   │   ├── App.vue         # Root component, context menu state
+│   │   ├── components/
+│   │   │   ├── PetCanvas.vue       # Canvas rendering, sprite animation, hitbox
+│   │   │   └── PetContextMenu.vue  # Right-click menu component
+│   │   └── styles/
+│   │       └── main.css    # Tailwind imports
+│   │
+│   ├── settings/           # Settings Vue app
+│   │   ├── index.html
+│   │   ├── main.ts
+│   │   ├── App.vue
+│   │   ├── components/
+│   │   │   ├── Navigation.vue
+│   │   │   ├── SettingsSection.vue
+│   │   │   ├── TodosSection.vue
+│   │   │   ├── SubscriptionsSection.vue
+│   │   │   └── TimerSection.vue
+│   │   ├── composables/    # State + IPC logic
+│   │   │   ├── useSettings.ts
+│   │   │   ├── useTodos.ts
+│   │   │   ├── useSubscriptions.ts
+│   │   │   └── useTimer.ts
+│   │   └── styles/
+│   │       └── main.css
+│   │
+│   ├── types/
+│   │   ├── petAPI.d.ts     # window.petAPI type definitions
+│   │   └── vue-shim.d.ts
+│   │
+│   └── styles/
+│       └── tailwind.css    # Shared Tailwind base
+│
+├── scripts/
+│   ├── start-dev.js        # Dev server launcher
+│   └── create-icon.js
+│
+└── assets/                 # Sprite sheets, icons
+    └── knight/
+        └── Colour1/Outline/120x80_PNGSheets/
+```
+
+## Two-Window Pet Architecture
+
+PetFocus uses a **dual-window system** for the pet overlay:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  petOverlayWindow (fullscreen, mode=overlay)                │
+│  - Renders pet sprite visually                              │
+│  - ALWAYS click-through (setIgnoreMouseEvents(true))        │
+│  - Receives state updates via IPC                           │
+│  - Does NOT receive mouse events directly                   │
+└─────────────────────────────────────────────────────────────┘
+                              ▲
+                              │ IPC: pet:input, pet:context-menu-state
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│  petInteractiveWindow (small hitbox, mode=interactive)      │
+│  - Receives actual mouse clicks                             │
+│  - Forwards events to overlay via IPC                       │
+│  - Expands to fullscreen when context menu opens            │
+│  - Shows context menu locally (PetContextMenu component)    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Mode Detection:** `src/pet/components/PetCanvas.vue:76`
+```javascript
+const mode = new URLSearchParams(window.location.search).get('mode') || 'interactive';
+```
+
 ## Key Files
 
 | File | Purpose | Priority |
 |------|---------|----------|
 | `main.js` | Electron main process, IPC handlers, window config | High |
 | `preload.js` | contextBridge API exposure, channel whitelist | High |
-| `src/pet/` | Vue Pet app (PetCanvas component, sprites) | High |
-| `database/db.js` | sql.js initialization, migrations, queries | High |
-| `database/todos.js` | Todo CRUD operations | Medium |
-| `database/subscriptions.js` | Subscription CRUD operations | Medium |
-| `database/settings.js` | Key-value settings store | Medium |
-| `src/pet/index.html` | Pet entry (dev) with CSP headers | Medium |
-| `src/pet/styles/main.css` | Pet-specific styles (uses Tailwind) | Medium |
+| `src/pet/components/PetCanvas.vue` | Pet rendering, sprite animation, hitbox, events | High |
+| `src/pet/components/PetContextMenu.vue` | Right-click context menu | High |
+| `src/pet/App.vue` | Pet app root, context menu state management | High |
+| `database/db.js` | sql.js initialization, migrations | High |
+| `src/settings/` | Settings window Vue app | Medium |
+| `src/types/petAPI.d.ts` | TypeScript definitions for window.petAPI | Medium |
 
 ## Development Commands
 
 ```bash
 npm install          # Install dependencies
-npm start            # Launch app
+npm start            # Launch app (production mode)
+npm run dev          # Launch with Vite dev server (HMR)
+npm run build        # Build for production
 ```
-
-## Teach
-
-**Learning objectives:** Understand the Electron + Vue Pet architecture, IPC patterns, canvas sprite logic, and how to integrate Tailwind for UI.
-
-**Topics:**
-1. Setup & run (npm install, npm run dev)
-2. Vite + Electron dev flow (DEV_SERVER_URL, scripts/start-dev.js)
-3. Port renderer → Vue (components & composables, src/pet/*)
-4. Mouse passthrough & IPC (preload.js whitelist)
-5. Asset management & Tailwind (move to public/assets/ + tailwind.css)
-6. Build & production verification (vite build, electron packaging)
-
-**Exercises:**
-- Ex1: Add a new `dance` state to the Pet (edit `src/pet/components/PetCanvas.vue`: `STATES`, `SPRITES`, `startBehavior`).
-- Ex2: Create a manual test checklist: drag, click, double-click → open Settings.
-- Ex3: Recreate a portion of the Pet UI using Tailwind utility classes.
-
-**Example AI prompts (teaching/testing):**
-- "Explain the steps to add a 'dance' state to the Pet: files to edit and tests to run."
-- "Check the dev CSP for HMR and recommend necessary changes."
-
-**Assessment criteria:**
-- Dev & production builds run without errors; Pet behaves correctly (animation, drag, click/dblclick); IPC is secure (preload whitelist); documentation updated.
 
 ## Architecture Rules
 
@@ -63,190 +131,184 @@ npm start            # Launch app
 ### Design Patterns
 
 1. **IPC Communication:** `ipcMain.handle` + `ipcRenderer.invoke` (Promise-based)
-2. **State Tracking:** Prevent redundant IPC calls with state comparison
-3. **Auto-save:** Database saves after every modification
-4. **Throttling:** Mouse events throttled to 16ms (~60fps)
+2. **Two-Window Pet:** Overlay (visual) + Interactive (hitbox) windows
+3. **Context Menu:** Rendered in interactive window, state synced to overlay via IPC
+4. **Hitbox Config:** Configurable via `HITBOX_CONFIG` object in PetCanvas.vue
 
-## Code Style
+## IPC Channel Reference
 
-- Vanilla JS (ES6+), no frameworks
-- 2-space indentation
-- camelCase for variables, PascalCase for classes
-- Descriptive function names
-- Comments for non-obvious logic
+### Database Channels (invoke)
+| Channel | Handler |
+|---------|---------|
+| `db:get-todos` | TodosDB.getAll |
+| `db:create-todo` | TodosDB.create |
+| `db:update-todo` | TodosDB.update |
+| `db:delete-todo` | TodosDB.delete |
+| `db:get-subscriptions` | SubscriptionsDB.getAll |
+| `db:get-settings` | SettingsDB.getAll |
+| `db:update-settings` | SettingsDB.set |
+
+### Window Channels (send)
+| Channel | Purpose |
+|---------|---------|
+| `window:toggle-passthrough` | Enable/disable click-through |
+| `window:set-position` | Move pet window |
+| `window:update-interactive-bounds` | Update hitbox position/size |
+| `window:expand-interactive-for-drag` | Expand/shrink interactive window |
+| `window:show-settings` | Open settings window |
+
+### Pet Channels (send)
+| Channel | Purpose |
+|---------|---------|
+| `pet:input` | Forward mouse events from interactive to overlay |
+| `pet:context-menu-state` | Sync context menu open/close state |
+| `pet:toggle-lock` | Lock/unlock pet position |
+| `pet:set-target-mode` | Enable attack target selection |
+| `pet:move-to-target` | Set attack destination |
+
+### Event Channels (on)
+| Channel | Purpose |
+|---------|---------|
+| `pet:input` | Receive forwarded mouse events |
+| `pet:context-menu-state` | Receive context menu state |
+| `pet:hitbox-debug` | Toggle hitbox debug visualization |
+| `pet:position-locked` | Receive lock state |
+| `pet:target-set` | Receive attack target |
 
 ## Common Tasks
 
 ### Add New IPC Channel
 
 ```javascript
-// 1. preload.js - Add to whitelist
+// 1. preload.js - Add to validChannels
 const validChannels = {
-  invoke: [
-    // ... existing
-    'db:new-channel',  // Add here
-  ],
+  send: ['existing...', 'new:channel'],
+  on: ['existing...', 'new:channel'],
 };
 
 // 2. preload.js - Expose via contextBridge
 contextBridge.exposeInMainWorld('petAPI', {
-  db: {
-    newMethod: (data) => ipcRenderer.invoke('db:new-channel', data),
+  newMethod: () => ipcRenderer.send('new:channel'),
+  on: {
+    newEvent: (cb) => {
+      ipcRenderer.on('new:channel', (_, data) => cb(data));
+    }
   }
 });
 
 // 3. main.js - Add handler
-ipcMain.handle('db:new-channel', async (event, data) => {
-  try {
-    return SomeDB.someMethod(data);
-  } catch (error) {
-    console.error('db:new-channel error:', error);
-    throw error;
-  }
+ipcMain.on('new:channel', (event, data) => {
+  // Handle
 });
-```
 
-### Add Database Table
-
-```javascript
-// 1. database/db.js - Add migration
-function runMigrations() {
-  // Check if migration applied
-  const result = db.exec("SELECT name FROM migrations WHERE name = '002_new_table'");
-  const applied = result.length > 0 && result[0].values.length > 0;
-
-  if (!applied) {
-    db.run(`
-      CREATE TABLE IF NOT EXISTS new_table (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        -- columns here
-        created_at TEXT DEFAULT (datetime('now'))
-      )
-    `);
-    db.run("INSERT INTO migrations (name) VALUES ('002_new_table')");
-  }
+// 4. src/types/petAPI.d.ts - Add type
+interface PetAPI {
+  newMethod(): void;
+  on: {
+    newEvent(callback: (data: any) => void): () => void;
+  };
 }
-
-// 2. Create database/newTable.js with CRUD operations
-// 3. Export in database/index.js
-// 4. Wire up IPC handlers in main.js
 ```
 
-### Add Pet State
+### Modify Hitbox Size
 
 ```javascript
-// renderer.js - Add to STATES object
+// src/pet/components/PetCanvas.vue - Lines 424-430
+const HITBOX_CONFIG = {
+  minSize: 30,        // Minimum hitbox dimension
+  topPadding: 0,      // Padding above sprite
+  sidePadding: 0,     // Padding left/right
+  bottomPadding: 2    // Padding below sprite
+};
+```
+
+### Add Pet State/Animation
+
+```javascript
+// src/pet/components/PetCanvas.vue
 const STATES = {
   IDLE: 'idle',
   RUN: 'run',
   SLEEP: 'sleep',
+  ATTACK: 'attack',
+  WALL_SLIDE: 'wallSlide',
   NEW_STATE: 'newState',  // Add here
 };
 
-// Add sprite config
 const SPRITES = {
-  // ... existing
   newState: {
-    src: './assets/knight/Colour1/Outline/120x80_PNGSheets/_NewState.png',
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_NewState.png',
     frames: 10,
     frameRate: 8
   }
 };
 
-// Update behavior logic in startBehavior()
+// Update startBehavior() to transition to new state
 ```
 
-### Modify UI Panel
+### Add Context Menu Item
 
-```html
-<!-- index.html - Add section to #ui-panel -->
-<div id="ui-panel">
-  <div class="panel-section">
-    <label>New Section</label>
-    <span id="new-value">Value</span>
-  </div>
+```vue
+<!-- src/pet/components/PetContextMenu.vue -->
+<div class="menu-item" @click="handleNewAction">
+  <NewIcon class="icon" :size="16" />
+  <span>New Action</span>
 </div>
-```
 
-```css
-/* styles.css - Add styles */
-.panel-section { /* ... */ }
-```
-
-```javascript
-// renderer.js - Add logic
-function initUIPanel() {
-  const newElement = document.getElementById('new-value');
-  // Initialize
+<script setup>
+const emit = defineEmits(['close', 'new-action']);
+function handleNewAction() {
+  emit('new-action');
+  emit('close');
 }
+</script>
+
+<!-- src/pet/App.vue -->
+<PetContextMenu @new-action="handleNewAction" />
 ```
 
 ## Debugging
 
-### Open DevTools
+### Enable DevTools
 ```javascript
-// main.js - Uncomment this line
-mainWindow.webContents.openDevTools({ mode: 'detached' });
+// main.js - In createPetOverlayWindow() or createSettingsWindow()
+window.webContents.openDevTools({ mode: 'detached' });
 ```
 
 ### Locations
 - **Main process logs:** Terminal running `npm start`
-- **Renderer logs:** DevTools console (Ctrl+Shift+I)
+- **Renderer logs:** DevTools console (F12)
 - **Database file:** `%APPDATA%/petfocus/petfocus.db`
 
-### Test Database in Console
+### Debug Hitbox
 ```javascript
-// DevTools console
+// DevTools console - Toggle hitbox visualization
+window.petAPI.window.toggleHitboxDebug()
+```
+
+### Test API in Console
+```javascript
 await window.petAPI.db.getTodos()
-await window.petAPI.db.createTodo({ title: 'Test' })
 await window.petAPI.db.getSettings()
+window.petAPI.pet.toggleLock(true)
 ```
 
 ## Testing Checklist
 
-Before committing:
-- [ ] App starts without errors (`npm start`)
-- [ ] Mouse passthrough works on transparent areas
+- [ ] `npm start` - App khoi dong khong loi
 - [ ] Pet animations play correctly
-- [ ] Pet responds to click/double-click
-- [ ] UI panel opens on double-click
+- [ ] Click triggers attack animation
+- [ ] Double-click opens settings
+- [ ] Right-click opens context menu
+- [ ] Context menu items work (Settings, Lock, Attack Target)
+- [ ] Drag pet works
+- [ ] Mouse passthrough on transparent areas
 - [ ] Data persists across restart
 - [ ] No console errors in DevTools
-
-## File Dependencies
-
-```
-main.js
-├── database/index.js
-│   ├── database/db.js (sql.js)
-│   ├── database/todos.js
-│   ├── database/subscriptions.js
-│   └── database/settings.js
-└── preload.js
-
-renderer.js
-├── window.petAPI (from preload.js)
-├── Sprites (from assets/)
-└── DOM elements (from index.html)
-```
-
-## IPC Channel Reference
-
-| Channel | Type | Direction | Handler |
-|---------|------|-----------|---------|
-| `window:toggle-passthrough` | send | R→M | setIgnoreMouseEvents |
-| `window:set-position` | send | R→M | setPosition |
-| `db:get-todos` | invoke | R→M | TodosDB.getAll |
-| `db:create-todo` | invoke | R→M | TodosDB.create |
-| `db:update-todo` | invoke | R→M | TodosDB.update |
-| `db:delete-todo` | invoke | R→M | TodosDB.delete |
-| `db:get-subscriptions` | invoke | R→M | SubscriptionsDB.getAll |
-| `db:get-settings` | invoke | R→M | SettingsDB.getAll |
-| `db:update-settings` | invoke | R→M | SettingsDB.set |
 
 ## Resources
 
 - [Electron Docs](https://www.electronjs.org/docs/latest/)
+- [Vue 3 Docs](https://vuejs.org/)
 - [sql.js API](https://sql.js.org/documentation/)
-- [Requirements](../requirements.md)
-- [Implementation Plan](../../plans/20260130-1030-petfocus-electron/plan.md)
+- [Tailwind CSS](https://tailwindcss.com/docs)

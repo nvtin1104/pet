@@ -30,13 +30,17 @@ function handleShowContextMenu(position) {
 
 function handleCloseContextMenu() {
   contextMenuVisible.value = false;
-  // Re-enable passthrough when menu closes
-  setTimeout(() => {
-    if (window.petAPI && window.petAPI.window && window.petAPI.window.togglePassthrough) {
-      window.petAPI.window.togglePassthrough(true);
-    }
-  }, 100);
+  // Dispatch event so PetCanvas can re-enable passthrough
   window.dispatchEvent(new Event('pet-context-menu-closed'));
+
+  // Notify overlay that menu is closed (resume pet behavior)
+  if (window.petAPI?.pet?.setContextMenuState) {
+    window.petAPI.pet.setContextMenuState(false);
+  }
+  // Restore interactive window to hitbox size
+  if (window.petAPI?.window?.expandInteractiveForDrag) {
+    window.petAPI.window.expandInteractiveForDrag(false);
+  }
 }
 
 function handleSetTarget() {
@@ -44,28 +48,51 @@ function handleSetTarget() {
   targetMode.value = true;
   console.log('Target mode enabled - click anywhere to set attack target');
   
-  // Send IPC to enable target selection mode
-  if (window.petAPI && window.petAPI.pet && window.petAPI.pet.setTargetMode) {
-    window.petAPI.pet.setTargetMode(true);
-  }
+  // Change cursor to crosshair
+  document.body.style.cursor = 'crosshair';
 
   // Listen for next click to set target
   const handleTargetClick = (e) => {
     if (targetMode.value) {
-      const target = { x: e.clientX, y: e.clientY };
+      // Get screen coordinates for target
+      const target = { 
+        x: window.screenX + e.clientX, 
+        y: window.screenY + e.clientY 
+      };
       
+      // Send target to overlay via IPC
       if (window.petAPI && window.petAPI.pet && window.petAPI.pet.moveToTarget) {
         window.petAPI.pet.moveToTarget(target.x, target.y);
       }
       
+      // Also dispatch local event for same-window handling
+      window.dispatchEvent(new CustomEvent('pet-attack-target', { 
+        detail: { x: e.clientX, y: e.clientY } 
+      }));
+      
       targetMode.value = false;
+      document.body.style.cursor = '';
       window.removeEventListener('click', handleTargetClick);
       console.log('Target set:', target);
     }
   };
+  
+  // Cancel on right-click or Escape
+  const handleCancel = (e) => {
+    if (e.type === 'contextmenu' || e.key === 'Escape') {
+      targetMode.value = false;
+      document.body.style.cursor = '';
+      window.removeEventListener('click', handleTargetClick);
+      window.removeEventListener('contextmenu', handleCancel);
+      window.removeEventListener('keydown', handleCancel);
+      console.log('Target mode cancelled');
+    }
+  };
 
   setTimeout(() => {
-    window.addEventListener('click', handleTargetClick, { once: false });
+    window.addEventListener('click', handleTargetClick);
+    window.addEventListener('contextmenu', handleCancel);
+    window.addEventListener('keydown', handleCancel);
   }, 100);
 }
 
