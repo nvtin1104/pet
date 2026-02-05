@@ -101,14 +101,14 @@ onBeforeUnmount(() => {
 .pet-context-menu {
   position: fixed;
   z-index: 99999;
-  background: rgba(15, 15, 26, 0.95);
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: rgba(10, 10, 10, 0.95);
+  border: 1px solid rgba(100, 180, 140, 0.3);
   border-radius: 8px;
   backdrop-filter: blur(10px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   min-width: 200px;
   padding: 8px 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 14px;
   user-select: none;
   animation: menuFadeIn 0.15s ease-out;
@@ -136,23 +136,23 @@ onBeforeUnmount(() => {
 }
 
 .menu-item:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(100, 180, 140, 0.2);
   color: #fff;
 }
 
 .menu-item:active {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(100, 180, 140, 0.3);
   transform: scale(0.98);
 }
 
 .menu-item .icon {
   flex-shrink: 0;
-  color: rgba(139, 92, 246, 0.8);
+  color: #64B48C;
 }
 
 .menu-divider {
   height: 1px;
-  background: rgba(139, 92, 246, 0.2);
+  background: rgba(100, 180, 140, 0.2);
   margin: 4px 0;
 }
 </style>

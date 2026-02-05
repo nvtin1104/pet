@@ -103,6 +103,24 @@
       <h2>System</h2>
       <div class="setting-item">
         <div class="setting-info">
+          <label>Theme</label>
+          <span class="setting-desc">Switch between light and dark mode</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <Sun v-if="theme === 'light'" :size="20" style="color: var(--color-accent);" />
+          <Moon v-else :size="20" style="color: var(--color-accent);" />
+          <label class="toggle-switch small">
+            <input
+              type="checkbox"
+              :checked="theme === 'dark'"
+              @change="toggleTheme"
+            >
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <label>Start with Windows</label>
           <span class="setting-desc">Launch app on system startup</span>
         </div>
@@ -151,7 +169,10 @@
 </template>
 
 <script setup lang="ts">
+import { Sun, Moon } from 'lucide-vue-next';
 import { useSettings } from '../composables/useSettings';
+import { useTheme } from '../composables/useTheme';
 
 const { settings, updateSetting } = useSettings();
+const { theme, toggleTheme } = useTheme();
 </script>

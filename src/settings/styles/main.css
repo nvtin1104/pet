@@ -1,5 +1,6 @@
 /* ============================================
-   PetFocus Settings Window Styles (Vue 3)
+   PetFocus Settings Window - Minimal Overrides
+   Most styles now use Tailwind utilities from tailwind.css
    ============================================ */
 
 * {
@@ -8,71 +9,62 @@
   box-sizing: border-box;
 }
 
-:root {
-  --bg-primary: #0f0f1a;
-  --bg-secondary: #1a1a2e;
-  --bg-tertiary: #252540;
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --border-color: #2a2a4a;
-  --text-primary: #eaeaea;
-  --text-secondary: #888;
-  --text-muted: #666;
-  --accent: #64b48c;
-  --accent-hover: #7ac49e;
-  --danger: #e74c3c;
-  --warning: #f39c12;
-}
-
 html, body {
   height: 100%;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 #app {
   height: 100%;
 }
 
+/* ============================================
+   Layout Containers
+   ============================================ */
+
 .settings-container {
   display: flex;
   height: 100%;
 }
 
-/* ============================================
-   Sidebar
-   ============================================ */
-
 #sidebar {
   width: 240px;
   min-width: 240px;
-  background: var(--bg-secondary);
+  background: var(--color-bg-secondary);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid var(--border-color);
+  border-right: 1px solid var(--color-border);
 }
+
+.content-area {
+  flex: 1;
+  padding: 32px;
+  overflow-y: auto;
+  background: var(--color-bg-primary);
+}
+
+/* ============================================
+   Sidebar Components
+   ============================================ */
 
 .logo {
   padding: 24px 20px;
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .logo-icon {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, var(--accent), #4a9a72);
+  background: linear-gradient(135deg, var(--color-accent), #4a9a72);
   border-radius: 8px;
 }
 
 .logo span {
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .nav-items {
@@ -87,20 +79,20 @@ html, body {
   gap: 12px;
   padding: 12px 20px;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   transition: all 0.2s ease;
   border-left: 3px solid transparent;
 }
 
 .nav-items li:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .nav-items li.active {
   background: rgba(100, 180, 140, 0.1);
-  border-left-color: var(--accent);
-  color: var(--accent);
+  border-left-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .nav-items li svg {
@@ -110,7 +102,7 @@ html, body {
 /* Pet Mode Section */
 #pet-mode-section {
   padding: 20px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--color-border);
   background: rgba(100, 180, 140, 0.05);
 }
 
@@ -122,42 +114,24 @@ html, body {
 
 .toggle-label {
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .pet-mode-hint {
   margin-top: 8px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
-/* Toggle Switch */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 26px;
-}
-
-.toggle-switch.small {
-  width: 42px;
-  height: 24px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
+/* Legacy Toggle Switch (for backward compatibility) */
 .slider {
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background: var(--bg-tertiary);
+  background: var(--color-bg-tertiary);
   border-radius: 26px;
   transition: 0.3s;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
 }
 
 .slider::before {
@@ -167,7 +141,7 @@ html, body {
   width: 20px;
   left: 2px;
   bottom: 2px;
-  background: var(--text-primary);
+  background: var(--color-text-primary);
   border-radius: 50%;
   transition: 0.3s;
 }
@@ -178,12 +152,13 @@ html, body {
 }
 
 input:checked + .slider {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 input:checked + .slider::before {
   transform: translateX(22px);
+  background: white;
 }
 
 .toggle-switch.small input:checked + .slider::before {
@@ -191,15 +166,8 @@ input:checked + .slider::before {
 }
 
 /* ============================================
-   Main Content
+   Animations
    ============================================ */
-
-.content-area {
-  flex: 1;
-  padding: 32px;
-  overflow-y: auto;
-  background: var(--bg-primary);
-}
 
 .section {
   animation: fadeIn 0.2s ease;
@@ -209,6 +177,19 @@ input:checked + .slider::before {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.timer-separator {
+  animation: blink 1s infinite;
+}
+
+/* ============================================
+   Section Headers
+   ============================================ */
 
 .section-header {
   display: flex;
@@ -220,12 +201,12 @@ input:checked + .slider::before {
 .section-header h1 {
   font-size: 28px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .header-btn {
   padding: 10px 20px;
-  background: var(--accent);
+  background: var(--color-accent);
   border: none;
   border-radius: 8px;
   color: white;
@@ -235,7 +216,7 @@ input:checked + .slider::before {
 }
 
 .header-btn:hover {
-  background: var(--accent-hover);
+  background: var(--color-accent-hover);
 }
 
 /* ============================================
@@ -251,26 +232,26 @@ input:checked + .slider::before {
 #todo-input {
   flex: 1;
   padding: 14px 16px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
   font-size: 14px;
   transition: border-color 0.2s;
 }
 
 #todo-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 #todo-input::placeholder {
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 #add-todo-btn {
   padding: 14px 28px;
-  background: var(--accent);
+  background: var(--color-accent);
   border: none;
   border-radius: 8px;
   color: white;
@@ -280,34 +261,13 @@ input:checked + .slider::before {
 }
 
 #add-todo-btn:hover {
-  background: var(--accent-hover);
+  background: var(--color-accent-hover);
 }
 
 #todo-filters {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
-}
-
-.filter-btn {
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.filter-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.filter-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
 }
 
 #todo-list {
@@ -319,15 +279,15 @@ input:checked + .slider::before {
   align-items: center;
   gap: 14px;
   padding: 14px 16px;
-  background: var(--bg-secondary);
+  background: var(--color-bg-secondary);
   border-radius: 8px;
   margin-bottom: 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   transition: all 0.2s;
 }
 
 .todo-item:hover {
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 .todo-item.completed {
@@ -336,31 +296,30 @@ input:checked + .slider::before {
 
 .todo-item.completed .todo-text {
   text-decoration: line-through;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 .todo-item input[type="checkbox"] {
   width: 20px;
   height: 20px;
-  accent-color: var(--accent);
   cursor: pointer;
 }
 
 .todo-text {
   flex: 1;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .todo-loading, .todo-empty {
   padding: 40px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 .delete-btn {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-size: 20px;
   cursor: pointer;
   padding: 4px 8px;
@@ -375,15 +334,15 @@ input:checked + .slider::before {
 }
 
 .delete-btn:hover {
-  color: var(--danger);
+  color: #e74c3c;
   background: rgba(231, 76, 60, 0.1);
 }
 
 #todo-stats {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--border-color);
-  color: var(--text-muted);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -403,23 +362,14 @@ input:checked + .slider::before {
   align-items: center;
   font-size: 96px;
   font-weight: 300;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
   margin-bottom: 8px;
 }
 
-.timer-separator {
-  animation: blink 1s infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
 #timer-label {
   font-size: 16px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   margin-bottom: 32px;
 }
 
@@ -431,10 +381,10 @@ input:checked + .slider::before {
 
 .timer-btn {
   padding: 14px 32px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -442,7 +392,7 @@ input:checked + .slider::before {
 }
 
 .timer-btn:hover:not(:disabled) {
-  background: var(--bg-tertiary);
+  background: var(--color-bg-tertiary);
 }
 
 .timer-btn:disabled {
@@ -451,13 +401,13 @@ input:checked + .slider::before {
 }
 
 .timer-btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: white;
 }
 
 .timer-btn.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--color-accent-hover);
 }
 
 #timer-presets {
@@ -468,22 +418,22 @@ input:checked + .slider::before {
 .preset-btn {
   padding: 10px 20px;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .preset-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .preset-btn.active {
   background: rgba(100, 180, 140, 0.1);
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 /* ============================================
@@ -499,22 +449,22 @@ input:checked + .slider::before {
 
 .summary-card {
   padding: 20px;
-  background: var(--bg-secondary);
+  background: var(--color-bg-secondary);
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
 }
 
 .summary-label {
   display: block;
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   margin-bottom: 8px;
 }
 
 .summary-value {
   font-size: 28px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--color-accent);
 }
 
 #subscription-list {
@@ -526,15 +476,15 @@ input:checked + .slider::before {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  background: var(--bg-secondary);
+  background: var(--color-bg-secondary);
   border-radius: 8px;
   margin-bottom: 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   transition: border-color 0.2s;
 }
 
 .subscription-item:hover {
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 .subscription-info {
@@ -545,18 +495,18 @@ input:checked + .slider::before {
 
 .subscription-name {
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .subscription-details {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 .subscription-loading, .subscription-empty {
   padding: 40px;
   text-align: center;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 /* Modal */
@@ -573,9 +523,9 @@ input:checked + .slider::before {
 .modal-content {
   width: 100%;
   max-width: 400px;
-  background: var(--bg-secondary);
+  background: var(--color-bg-secondary);
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
@@ -584,7 +534,7 @@ input:checked + .slider::before {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .modal-header h2 {
@@ -595,14 +545,14 @@ input:checked + .slider::before {
 .modal-close {
   background: transparent;
   border: none;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-size: 24px;
   cursor: pointer;
   padding: 4px 8px;
 }
 
 .modal-close:hover {
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 #subscription-form {
@@ -617,24 +567,24 @@ input:checked + .slider::before {
   display: block;
   margin-bottom: 8px;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 .form-actions {
@@ -647,22 +597,22 @@ input:checked + .slider::before {
   flex: 1;
   padding: 12px;
   background: transparent;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-cancel:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .btn-submit {
   flex: 1;
   padding: 12px;
-  background: var(--accent);
+  background: var(--color-accent);
   border: none;
   border-radius: 6px;
   color: white;
@@ -672,7 +622,7 @@ input:checked + .slider::before {
 }
 
 .btn-submit:hover {
-  background: var(--accent-hover);
+  background: var(--color-accent-hover);
 }
 
 /* ============================================
@@ -687,10 +637,10 @@ input:checked + .slider::before {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .setting-item {
@@ -698,7 +648,7 @@ input:checked + .slider::before {
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .setting-item:last-child {
@@ -713,21 +663,21 @@ input:checked + .slider::before {
 
 .setting-info label {
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
 }
 
 .setting-desc {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
 }
 
 .setting-item input[type="text"],
 .setting-item input[type="number"] {
   padding: 10px 14px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
   width: 140px;
   text-align: right;
 }
@@ -735,26 +685,30 @@ input:checked + .slider::before {
 .setting-item input[type="text"]:focus,
 .setting-item input[type="number"]:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 /* ============================================
-   Scrollbar
+   Filter Buttons
    ============================================ */
 
-::-webkit-scrollbar {
-  width: 8px;
+.filter-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+.filter-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+.filter-btn.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
 }

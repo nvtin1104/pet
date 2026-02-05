@@ -1,3 +1,491 @@
+/* ============================================
+   PetFocus - Tailwind CSS with Minimalist Design System
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================
+   CSS Custom Properties for Theme Switching
+   ============================================ */
+
+:root {
+  /* Light mode (default when no dark class) */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-bg-hover: rgba(0, 0, 0, 0.05);
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-accent: #64B48C;
+  --color-accent-hover: #7ac49e;
+}
+
+.dark {
+  /* Dark mode - Pure black/gray tones */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #141414;
+  --color-bg-tertiary: #1f1f1f;
+  --color-bg-hover: rgba(255, 255, 255, 0.05);
+  --color-text-primary: #eaeaea;
+  --color-text-secondary: #888888;
+  --color-text-muted: #666666;
+  --color-border: #2a2a2a;
+  --color-accent: #64B48C;
+  --color-accent-hover: #7ac49e;
+}
+
+/* ============================================
+   Base Layer Customizations
+   ============================================ */
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-primary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+  }
+
+  /* Custom checkbox accent */
+  input[type="checkbox"] {
+    accent-color: var(--color-accent);
+  }
+}
+
+/* ============================================
+   Component Layer - Reusable Components
+   (Using plain CSS for Tailwind v4 compatibility)
+   ============================================ */
+
+@layer components {
+  /* Button Base */
+  .btn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+
+  .btn-primary {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-hover);
+  }
+
+  .btn-secondary {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .btn-danger {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+  }
+
+  .btn-danger:hover {
+    background-color: #c0392b;
+  }
+
+  /* Input Base */
+  .input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .input::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  /* Card Component */
+  .card {
+    padding: 20px;
+    border-radius: 12px;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  /* Toggle Switch */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    border-radius: 9999px;
+    transition: all 0.3s ease;
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+  }
+
+  .toggle-slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 1px;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    background-color: var(--color-text-primary);
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(24px);
+    background-color: white;
+  }
+
+  /* Menu Item (for context menu) */
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--color-text-primary);
+  }
+
+  .menu-item:hover {
+    background-color: rgba(100, 180, 140, 0.2);
+  }
+
+  .menu-item:active {
+    transform: scale(0.98);
+  }
+
+  .menu-item .icon {
+    flex-shrink: 0;
+    color: var(--color-accent);
+    opacity: 0.8;
+  }
+
+  .menu-divider {
+    height: 1px;
+    margin: 4px 0;
+    background-color: rgba(100, 180, 140, 0.2);
+  }
+
+  /* Navigation Item */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--color-text-secondary);
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .nav-item.active {
+    background-color: rgba(100, 180, 140, 0.1);
+    border-left-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* Section Header */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .section-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  /* Settings Group */
+  .settings-group {
+    margin-bottom: 32px;
+  }
+
+  .settings-group h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .setting-item:last-child {
+    border-bottom: none;
+  }
+
+  .setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .setting-info label {
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  .setting-desc {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  /* Todo Item */
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .todo-item:hover {
+    border-color: var(--color-accent);
+  }
+
+  .todo-item.completed {
+    opacity: 0.6;
+  }
+
+  .todo-item.completed .todo-text {
+    text-decoration: line-through;
+    color: var(--color-text-muted);
+  }
+
+  /* Filter Button */
+  .filter-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+  }
+
+  .filter-btn:hover {
+    background-color: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+
+  .filter-btn.active {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: white;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    background-color: rgba(0, 0, 0, 0.7);
+  }
+
+  .modal-content {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* Summary Card */
+  .summary-card {
+    padding: 16px;
+    border-radius: 8px;
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+  }
+
+  .summary-card .label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    color: var(--color-text-muted);
+  }
+
+  .summary-card .value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+}
+
+/* ============================================
+   Utilities Layer
+   ============================================ */
+
+@layer utilities {
+  /* Text colors using CSS variables */
+  .text-primary {
+    color: var(--color-text-primary);
+  }
+
+  .text-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-accent {
+    color: var(--color-accent);
+  }
+
+  /* Background utilities */
+  .bg-primary {
+    background-color: var(--color-bg-primary);
+  }
+
+  .bg-secondary {
+    background-color: var(--color-bg-secondary);
+  }
+
+  .bg-tertiary {
+    background-color: var(--color-bg-tertiary);
+  }
+
+  .bg-accent {
+    background-color: var(--color-accent);
+  }
+
+  /* Border utilities */
+  .border-theme {
+    border-color: var(--color-border);
+  }
+}
