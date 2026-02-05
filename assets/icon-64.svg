@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 256 256">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="#000000" stroke="#22c55e" stroke-width="8"/>
+  
+  <!-- Pet face (minimalist dog/cat) -->
+  <!-- Eyes -->
+  <circle cx="104" cy="108" r="8" fill="#22c55e"/>
+  <circle cx="152" cy="108" r="8" fill="#22c55e"/>
+  
+  <!-- Nose -->
+  <path d="M128 130 Q120 140 128 145 Q136 140 128 130Z" fill="#22c55e"/>
+  
+  <!-- Mouth -->
+  <path d="M128 145 Q118 155 108 150" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M128 145 Q138 155 148 150" stroke="#22c55e" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Ears -->
+  <ellipse cx="90" cy="80" rx="12" ry="20" fill="#22c55e" transform="rotate(-25 90 80)"/>
+  <ellipse cx="166" cy="80" rx="12" ry="20" fill="#22c55e" transform="rotate(25 166 80)"/>
+  
+  <!-- Focus dots (minimalist geometric touch) -->
+  <circle cx="128" cy="190" r="3" fill="#22c55e" opacity="0.6"/>
+  <circle cx="140" cy="190" r="2" fill="#22c55e" opacity="0.4"/>
+  <circle cx="116" cy="190" r="2" fill="#22c55e" opacity="0.4"/>
+</svg>

@@ -1,5 +1,6 @@
 const { app, BrowserWindow, screen, ipcMain, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 // Database imports
 const { db, TodosDB, SubscriptionsDB, SettingsDB } = require('./database');
@@ -28,8 +29,21 @@ function createSettingsWindow() {
     transparent: false,
     resizable: true,
     skipTaskbar: false,
-    backgroundColor: '#0f0f1a',
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    backgroundColor: '#000000',
+    icon: (() => {
+      // Try PNG first, fallback to SVG
+      const pngPath = path.join(__dirname, 'assets', 'icon.png');
+      const svgPath = path.join(__dirname, 'assets', 'icon.svg');
+      
+      if (fs.existsSync(pngPath)) {
+        return pngPath;
+      } else if (fs.existsSync(svgPath)) {
+        return svgPath;
+      } else {
+        // Fallback to no icon
+        return undefined;
+      }
+    })(),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -716,11 +730,10 @@ app.on('activate', () => {
 // ============================================
 
 function createTray() {
-  // Create tray icon from sprite sheet
-  const iconPath = path.join(__dirname, 'assets', 'knight', 'Colour1', 'Outline', '120x80_PNGSheets', '_Idle.png');
-
-  let trayIcon = nativeImage.createFromPath(iconPath);
-  trayIcon = trayIcon.crop({ x: 30, y: 10, width: 60, height: 60 });
+  // Create tray icon using new minimalist design
+  const trayIconPath = path.join(__dirname, 'assets', 'tray-icon.svg');
+  
+  let trayIcon = nativeImage.createFromPath(trayIconPath);
   trayIcon = trayIcon.resize({ width: 16, height: 16 });
 
   tray = new Tray(trayIcon);

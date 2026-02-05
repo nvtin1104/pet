@@ -1,8 +1,19 @@
 <template>
   <nav id="sidebar">
     <div class="logo">
-      <div class="logo-icon"></div>
-      <span>PetFocus</span>
+      <svg width="32" height="32" viewBox="0 0 32 32" class="logo-icon">
+        <circle cx="16" cy="16" r="14" fill="#000000" stroke="#22c55e" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="1.5" fill="#22c55e"/>
+        <circle cx="20" cy="12" r="1.5" fill="#22c55e"/>
+        <path d="M16 16 Q13 18 16 20 Q19 18 16 16Z" fill="#22c55e"/>
+        <path d="M16 20 Q12 22 10 21" stroke="#22c55e" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <path d="M16 20 Q20 22 22 21" stroke="#22c55e" stroke-width="1" fill="none" stroke-linecap="round"/>
+        <circle cx="16" cy="26" r="0.8" fill="#22c55e" opacity="0.7"/>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-title">PetFocus</span>
+        <span class="logo-subtitle">Desktop Pet</span>
+      </div>
     </div>
 
     <ul class="nav-items">
@@ -63,32 +74,37 @@ const navItems: NavItem[] = [
     id: 'todos',
     label: 'Todos',
     icon: () => [
-      h('path', { d: 'M9 11l3 3L22 4' }),
-      h('path', { d: 'M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11' })
+      h('rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
+      h('path', { d: 'M9 12l2 2 4-4', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
     ]
   },
   {
     id: 'timer',
     label: 'Timer',
     icon: () => [
-      h('circle', { cx: '12', cy: '12', r: '10' }),
-      h('polyline', { points: '12 6 12 12 16 14' })
+      h('circle', { cx: '12', cy: '12', r: '9', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
+      h('path', { d: 'M12 7v5l3 3', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+      h('circle', { cx: '12', cy: '12', r: '1', fill: 'currentColor' })
     ]
   },
   {
     id: 'subscriptions',
     label: 'Subscriptions',
     icon: () => [
-      h('rect', { x: '1', y: '4', width: '22', height: '16', rx: '2', ry: '2' }),
-      h('line', { x1: '1', y1: '10', x2: '23', y2: '10' })
+      h('rect', { x: '2', y: '6', width: '20', height: '12', rx: '2', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
+      h('path', { d: 'M2 8h20', stroke: 'currentColor', 'stroke-width': '1.5' }),
+      h('circle', { cx: '7', cy: '13', r: '1', fill: 'currentColor' }),
+      h('circle', { cx: '12', cy: '13', r: '1', fill: 'currentColor' })
     ]
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: () => [
-      h('circle', { cx: '12', cy: '12', r: '3' }),
-      h('path', { d: 'M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z' })
+      h('circle', { cx: '12', cy: '12', r: '3', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
+      h('path', { d: 'M12 1v6M12 17v6', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round' }),
+      h('path', { d: 'm21 12-6-6v12l6-6Z', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linejoin': 'round' }),
+      h('path', { d: 'm3 12 6-6v12l-6-6Z', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linejoin': 'round' })
     ]
   }
 ];

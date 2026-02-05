@@ -101,27 +101,28 @@ onBeforeUnmount(() => {
 .pet-context-menu {
   position: fixed;
   z-index: 99999;
-  background: rgba(10, 10, 10, 0.95);
-  border: 1px solid rgba(100, 180, 140, 0.3);
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.3);
   border-radius: 8px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
   min-width: 200px;
-  padding: 8px 0;
+  padding: 8px;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 14px;
+  font-weight: 500;
   user-select: none;
-  animation: menuFadeIn 0.15s ease-out;
+  animation: menuFadeIn 0.2s ease-out;
 }
 
 @keyframes menuFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.95) translateY(-4px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -129,30 +130,39 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
+  border-radius: 6px;
   transition: all 0.15s ease;
 }
 
 .menu-item:hover {
-  background: rgba(100, 180, 140, 0.2);
-  color: #fff;
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  transform: translateY(-1px);
 }
 
 .menu-item:active {
-  background: rgba(100, 180, 140, 0.3);
+  background: rgba(34, 197, 94, 0.25);
   transform: scale(0.98);
 }
 
 .menu-item .icon {
   flex-shrink: 0;
-  color: #64B48C;
+  color: #22c55e;
+  opacity: 0.9;
+}
+
+.menu-item:hover .icon {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .menu-divider {
   height: 1px;
-  background: rgba(100, 180, 140, 0.2);
-  margin: 4px 0;
+  background: rgba(34, 197, 94, 0.2);
+  margin: 6px 8px;
+  border-radius: 1px;
 }
 </style>
