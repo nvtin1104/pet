@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
   position: fixed;
   z-index: 99999;
   background: rgba(0, 0, 0, 0.95);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  border: 1px solid rgba(79, 70, 229, 0.3);
   border-radius: 8px;
   backdrop-filter: blur(12px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
@@ -138,19 +138,19 @@ onBeforeUnmount(() => {
 }
 
 .menu-item:hover {
-  background: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
+  background: rgba(79, 70, 229, 0.15);
+  color: #4F46E5;
   transform: translateY(-1px);
 }
 
 .menu-item:active {
-  background: rgba(34, 197, 94, 0.25);
+  background: rgba(79, 70, 229, 0.25);
   transform: scale(0.98);
 }
 
 .menu-item .icon {
   flex-shrink: 0;
-  color: #22c55e;
+  color: #4F46E5;
   opacity: 0.9;
 }
 
@@ -161,7 +161,7 @@ onBeforeUnmount(() => {
 
 .menu-divider {
   height: 1px;
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(79, 70, 229, 0.2);
   margin: 6px 8px;
   border-radius: 1px;
 }
