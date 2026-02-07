@@ -184,10 +184,10 @@ watch(() => props.visible, (newVal) => {
       clampMenuPosition();
     });
     setTimeout(() => {
-      // Re-clamp after animation settles
+      // Re-clamp after animation settles and window fully resized
       clampMenuPosition();
       document.addEventListener('click', handleClickOutside);
-    }, 60);
+    }, 120);
   } else {
     document.removeEventListener('click', handleClickOutside);
   }

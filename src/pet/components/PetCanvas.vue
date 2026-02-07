@@ -822,12 +822,6 @@ function computeCssBounds() {
     height: cssH + HITBOX_CONFIG.topPadding + HITBOX_CONFIG.bottomPadding
   };
 
-  // Clamp to screen
-  const sw = window.screen.availWidth || window.innerWidth;
-  const sh = window.screen.availHeight || window.innerHeight;
-  padded.x = Math.max(0, Math.min(padded.x, sw - 1));
-  padded.y = Math.max(0, Math.min(padded.y, sh - 1));
-
   return { ...padded, dpr: window.devicePixelRatio || 1 };
 }
 
@@ -1006,12 +1000,24 @@ function bindEvents() {
       if (window.petAPI?.pet?.setContextMenuState) {
         window.petAPI.pet.setContextMenuState(true);
       }
-      // Wait for window expansion, then show menu at click position
-      // After expansion window is at 0,0, so screen coords = client coords
-      // PetContextMenu auto-clamps to viewport edges
-      setTimeout(() => {
-        emit('show-context-menu', { x: screenX, y: screenY });
-      }, 50);
+      // Wait for window expansion to complete, then convert screen coords
+      // to client coords of the new fullscreen window
+      const showMenu = () => {
+        const clientX = screenX - window.screenX;
+        const clientY = screenY - window.screenY;
+        emit('show-context-menu', { x: clientX, y: clientY });
+      };
+      const onResize = () => {
+        window.removeEventListener('resize', onResize);
+        clearTimeout(fallbackTimer);
+        // One extra frame to ensure layout is updated
+        requestAnimationFrame(showMenu);
+      };
+      window.addEventListener('resize', onResize);
+      const fallbackTimer = setTimeout(() => {
+        window.removeEventListener('resize', onResize);
+        showMenu();
+      }, 200);
     };
 
     containerEl.addEventListener('mousedown', mousedown);

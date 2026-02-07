@@ -294,25 +294,16 @@ function destroyPetInteractiveWindow() {
 let lastOverlayBounds = null;
 
 function updateInteractiveWindowBounds(bounds) {
-  // Expecting CSS pixels + dpr (from renderer)
+  // Renderer sends screen-space DIP coordinates (window.screenX + pet.x)
+  // Electron's setBounds also uses DIP coordinates — no scale conversion needed
   if (!bounds) return;
-  const cssX = bounds.x;
-  const cssY = bounds.y;
-  const cssW = bounds.width;
-  const cssH = bounds.height;
 
-  // Find the display for the CSS point
-  const display = screen.getDisplayNearestPoint({ x: Math.round(cssX), y: Math.round(cssY) });
-  const scale = display ? (display.scaleFactor || 1) : 1;
-
-  // Convert CSS pixels -> physical pixels using display scale factor
-  // Use minimum 40px for smaller, tighter hitbox
-  const physX = Math.round(cssX * scale);
-  const physY = Math.round(cssY * scale);
-  const physW = Math.max(40, Math.round(cssW * scale));
-  const physH = Math.max(40, Math.round(cssH * scale));
-
-  const newBounds = { x: physX, y: physY, width: physW, height: physH };
+  const newBounds = {
+    x: Math.round(bounds.x),
+    y: Math.round(bounds.y),
+    width: Math.max(40, Math.round(bounds.width)),
+    height: Math.max(40, Math.round(bounds.height))
+  };
 
   // Always save bounds for restoration after expand/shrink
   lastOverlayBounds = newBounds;
@@ -370,11 +361,14 @@ ipcMain.on('window:expand-interactive-for-drag', (event, expand) => {
   if (!petInteractiveWindow) return;
 
   if (expand) {
-    const display = screen.getPrimaryDisplay();
-    const { width, height } = display.bounds;
+    // Use the display where the overlay currently is, not always primary
+    const targetDisplay = petOverlayWindow
+      ? screen.getDisplayMatching(petOverlayWindow.getBounds())
+      : screen.getPrimaryDisplay();
+    const { x, y, width, height } = targetDisplay.bounds;
     try {
-      petInteractiveWindow.setBounds({ x: 0, y: 0, width, height });
-      console.log('Interactive window expanded for drag');
+      petInteractiveWindow.setBounds({ x, y, width, height });
+      console.log('Interactive window expanded for drag on display:', targetDisplay.id);
     } catch (e) {
       console.warn('Failed to expand interactive window:', e);
     }
