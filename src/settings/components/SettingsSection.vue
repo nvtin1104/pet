@@ -5,7 +5,12 @@
     </div>
 
     <!-- Pet Settings -->
-    <div class="settings-group">
+    <div
+      class="settings-group"
+      v-motion
+      :initial="{ opacity: 0, y: 12 }"
+      :enter="{ opacity: 1, y: 0 }"
+    >
       <h2>Pet</h2>
       <div class="setting-item">
         <div class="setting-info">
@@ -52,7 +57,12 @@
     </div>
 
     <!-- Timer Settings -->
-    <div class="settings-group">
+    <div
+      class="settings-group"
+      v-motion
+      :initial="{ opacity: 0, y: 12 }"
+      :enter="{ opacity: 1, y: 0, transition: { delay: 80 } }"
+    >
       <h2>Timer</h2>
       <div class="setting-item">
         <div class="setting-info">
@@ -99,7 +109,12 @@
     </div>
 
     <!-- System Settings -->
-    <div class="settings-group">
+    <div
+      class="settings-group"
+      v-motion
+      :initial="{ opacity: 0, y: 12 }"
+      :enter="{ opacity: 1, y: 0, transition: { delay: 160 } }"
+    >
       <h2>System</h2>
       <div class="setting-item">
         <div class="setting-info">

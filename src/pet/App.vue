@@ -9,6 +9,7 @@
       @set-target="handleSetTarget"
       @open-settings="handleOpenSettings"
       @toggle-lock="handleToggleLock"
+      @switch-display="handleSwitchDisplay"
     />
   </div>
 </template>
@@ -73,6 +74,13 @@ function handleToggleLock() {
   // Send IPC to toggle position lock
   if (window.petAPI && window.petAPI.pet && window.petAPI.pet.toggleLock) {
     window.petAPI.pet.toggleLock(positionLocked.value);
+  }
+}
+
+function handleSwitchDisplay(displayId) {
+  console.log('Switching to display:', displayId);
+  if (window.petAPI?.pet?.moveToDisplay) {
+    window.petAPI.pet.moveToDisplay(displayId);
   }
 }
 

@@ -215,19 +215,21 @@ function createPetOverlayWindow() {
   console.log('Pet overlay window created');
 }
 
-function createPetInteractiveWindow(bounds = { width: 180, height: 120, x: 100, y: 100 }) {
+function createPetInteractiveWindow(bounds = null) {
+  // Default to off-screen; overlay will send correct bounds once loaded
+  const defaultBounds = bounds || { width: 1, height: 1, x: -100, y: -100 };
   if (petInteractiveWindow) {
     try {
-      petInteractiveWindow.setBounds(bounds);
+      petInteractiveWindow.setBounds(defaultBounds);
     } catch (e) {}
     return;
   }
 
   petInteractiveWindow = new BrowserWindow({
-    width: bounds.width,
-    height: bounds.height,
-    x: bounds.x,
-    y: bounds.y,
+    width: defaultBounds.width,
+    height: defaultBounds.height,
+    x: defaultBounds.x,
+    y: defaultBounds.y,
     show: false,
     frame: false,
     transparent: true,
@@ -459,6 +461,46 @@ ipcMain.on('pet:context-menu-state', (event, open) => {
   console.log('Context menu state:', open);
   if (petOverlayWindow && petOverlayWindow.webContents) {
     petOverlayWindow.webContents.send('pet:context-menu-state', open);
+  }
+});
+
+// Get all available displays for screen switching
+ipcMain.handle('pet:get-displays', () => {
+  const displays = screen.getAllDisplays();
+  const current = petOverlayWindow
+    ? screen.getDisplayMatching(petOverlayWindow.getBounds())
+    : screen.getPrimaryDisplay();
+  return displays.map((d, i) => ({
+    id: d.id,
+    label: `${d.bounds.width}×${d.bounds.height}` + (d.id === current.id ? ' (current)' : ''),
+    bounds: d.bounds,
+    isCurrent: d.id === current.id,
+    index: i
+  }));
+});
+
+// Move pet to a different display
+ipcMain.on('pet:move-to-display', (event, displayId) => {
+  const displays = screen.getAllDisplays();
+  const target = displays.find(d => d.id === displayId);
+  if (!target) return;
+
+  const { x, y, width, height } = target.bounds;
+  console.log(`Moving pet to display ${displayId}:`, target.bounds);
+
+  // Reposition overlay window to fill the target display
+  if (petOverlayWindow) {
+    petOverlayWindow.setBounds({ x, y, width, height });
+  }
+
+  // Reset interactive window off-screen; the overlay will re-send bounds
+  if (petInteractiveWindow) {
+    petInteractiveWindow.setBounds({ x: x - 100, y: y - 100, width: 1, height: 1 });
+  }
+
+  // Tell overlay renderer to reset pet position on the new screen
+  if (petOverlayWindow && petOverlayWindow.webContents) {
+    petOverlayWindow.webContents.send('pet:display-changed', { x, y, width, height });
   }
 });
 

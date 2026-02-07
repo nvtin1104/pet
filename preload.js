@@ -13,7 +13,8 @@ const validChannels = {
     'db:delete-subscription',
     'db:get-settings',
     'db:update-settings',
-    'window:get-cursor-in-window'
+    'window:get-cursor-in-window',
+    'pet:get-displays'
   ],
   send: [
     'window:toggle-passthrough',
@@ -39,7 +40,8 @@ const validChannels = {
     'pet:cancel-target',
     'pet:toggle-lock',
     // Context menu state sync between interactive and overlay windows
-    'pet:context-menu-state'
+    'pet:context-menu-state',
+    'pet:move-to-display'
   ],
   on: [
     'pet:state-change',
@@ -54,7 +56,9 @@ const validChannels = {
     'pet:position-locked',
     'pet:target-mode-active',
     // Context menu state from interactive window
-    'pet:context-menu-state'
+    'pet:context-menu-state',
+    // Display changed notification
+    'pet:display-changed'
   ]
 };
 
@@ -113,7 +117,10 @@ contextBridge.exposeInMainWorld('petAPI', {
     cancelTarget: () => ipcRenderer.send('pet:cancel-target'),
     toggleLock: (locked) => ipcRenderer.send('pet:toggle-lock', locked),
     // Context menu state sync
-    setContextMenuState: (open) => ipcRenderer.send('pet:context-menu-state', open)
+    setContextMenuState: (open) => ipcRenderer.send('pet:context-menu-state', open),
+    // Display switching
+    getDisplays: () => ipcRenderer.invoke('pet:get-displays'),
+    moveToDisplay: (displayId) => ipcRenderer.send('pet:move-to-display', displayId)
   },
 
 
@@ -182,6 +189,12 @@ contextBridge.exposeInMainWorld('petAPI', {
       const handler = (_, open) => callback(open);
       ipcRenderer.on('pet:context-menu-state', handler);
       return () => ipcRenderer.removeListener('pet:context-menu-state', handler);
+    },
+    // Display changed notification
+    displayChanged: (callback) => {
+      const handler = (_, bounds) => callback(bounds);
+      ipcRenderer.on('pet:display-changed', handler);
+      return () => ipcRenderer.removeListener('pet:display-changed', handler);
     }
   },
 

@@ -1,11 +1,6 @@
 <template>
-  <div 
-    id="pet-container" 
-    ref="container" 
-    :class="mode === 'interactive' ? 'interactive-hitbox' : 'pointer-events-none'" 
-    class="overflow-hidden" 
-    style="touch-action: none;"
-  >
+  <div id="pet-container" ref="container" :class="mode === 'interactive' ? 'interactive-hitbox' : 'pointer-events-none'"
+    class="overflow-hidden" style="touch-action: none;">
     <canvas ref="canvas" class="block"></canvas>
   </div>
 </template>
@@ -34,12 +29,33 @@ const FRAME_WIDTH = 120;
 const FRAME_HEIGHT = 80;
 const SPRITE_SCALE = 1.5;
 
+// Visible knight bounds within the 120×80 frame (pixels where knight actually appears)
+// Adjust these if you change sprite assets
+const SPRITE_CONTENT = {
+  left: 42,      // Knight pixels start ~35px from left edge of frame
+  top: 42,       // Knight pixels start ~30px from top edge of frame
+  right: 64,     // Knight pixels end ~85px from left edge
+  bottom: 75     // Knight pixels end ~75px from top edge
+};
+
 const STATES = {
   IDLE: 'idle',
   RUN: 'run',
   SLEEP: 'sleep',
   ATTACK: 'attack',
-  WALL_SLIDE: 'wallSlide'
+  ATTACK2: 'attack2',
+  WALL_SLIDE: 'wallSlide',
+  WALL_CLIMB: 'wallClimb',
+  WALL_HANG: 'wallHang',
+  JUMP: 'jump',
+  FALL: 'fall',
+  JUMP_FALL_BETWEEN: 'jumpFallBetween',
+  DASH: 'dash',
+  ROLL: 'roll',
+  SLIDE: 'slide',
+  HIT: 'hit',
+  TURN: 'turn',
+  CROUCH: 'crouch'
 };
 
 const SPRITES = {
@@ -54,19 +70,79 @@ const SPRITES = {
     frameRate: 12
   },
   sleep: {
-    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Crouch.png',
-    frames: 1,
-    frameRate: 1
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_CrouchFull.png',
+    frames: 3,
+    frameRate: 2
   },
   attack: {
     src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Attack.png',
     frames: 4,
     frameRate: 10
   },
+  attack2: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Attack2.png',
+    frames: 6,
+    frameRate: 10
+  },
   wallSlide: {
     src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_WallSlide.png',
     frames: 3,
     frameRate: 6
+  },
+  wallClimb: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_WallClimb.png',
+    frames: 7,
+    frameRate: 10
+  },
+  wallHang: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_WallHang.png',
+    frames: 1,
+    frameRate: 1
+  },
+  jump: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Jump.png',
+    frames: 3,
+    frameRate: 8
+  },
+  fall: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Fall.png',
+    frames: 3,
+    frameRate: 8
+  },
+  jumpFallBetween: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_JumpFallInbetween.png',
+    frames: 2,
+    frameRate: 6
+  },
+  dash: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Dash.png',
+    frames: 2,
+    frameRate: 10
+  },
+  roll: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Roll.png',
+    frames: 12,
+    frameRate: 16
+  },
+  slide: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_SlideFull.png',
+    frames: 4,
+    frameRate: 8
+  },
+  hit: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Hit.png',
+    frames: 1,
+    frameRate: 1
+  },
+  turn: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_TurnAround.png',
+    frames: 3,
+    frameRate: 10
+  },
+  crouch: {
+    src: '/assets/knight/Colour1/Outline/120x80_PNGSheets/_Crouch.png',
+    frames: 1,
+    frameRate: 1
   }
 };
 
@@ -79,8 +155,8 @@ const pet = {
   direction: 1,
   images: {},
   loaded: false,
-  x: window.innerWidth - FRAME_WIDTH * SPRITE_SCALE - 20,
-  y: window.innerHeight - FRAME_HEIGHT * SPRITE_SCALE - 20,
+  x: window.innerWidth - SPRITE_CONTENT.right * SPRITE_SCALE,
+  y: window.innerHeight - SPRITE_CONTENT.bottom * SPRITE_SCALE,
   vx: 0,
   vy: 0,
   targetX: null,
@@ -88,8 +164,117 @@ const pet = {
   movingToTarget: false,
   locked: false,
   isDragging: false,
-  contextMenuOpen: false
+  contextMenuOpen: false,
+  // Platformer physics
+  grounded: false,
+  currentPlatform: null,
+  onWall: false,          // touching a vertical wall
+  wallSide: 0,            // -1 = wall on left, 1 = wall on right
+  jumping: false,
+  jumpHoldTime: 0,
+  canDoubleJump: false,
+  stateTimer: 0,          // time spent in current state (ms)
+  prevState: null
 };
+
+// ============= PHYSICS CONSTANTS =============
+const PHYSICS = {
+  GRAVITY: 600,             // px/s² — pull downward
+  MAX_FALL_SPEED: 500,      // px/s — terminal velocity
+  JUMP_VELOCITY: -320,      // px/s — initial upward velocity on jump
+  WALL_JUMP_VX: 200,        // px/s — horizontal kick off wall
+  WALL_JUMP_VY: -280,       // px/s — vertical kick off wall
+  WALL_SLIDE_SPEED: 40,     // px/s — slow slide down wall
+  WALL_CLIMB_SPEED: -80,    // px/s — climb up wall
+  RUN_SPEED_MIN: 80,        // px/s
+  RUN_SPEED_MAX: 180,       // px/s
+  GROUND_FRICTION: 0.88,    // per-frame multiplier when not running
+  AIR_FRICTION: 0.98,       // per-frame multiplier in air
+  DASH_SPEED: 400,          // px/s
+  DASH_DURATION: 200,       // ms
+};
+
+// ============= PLATFORM SYSTEM =============
+// Platform: { id, x, y, width, type: 'floor'|'ceiling'|'wallLeft'|'wallRight', source: 'screen'|'window' }
+let platforms = [];
+let platformPollTimer = null;
+
+// Build screen-edge platforms from current viewport
+function buildScreenPlatforms() {
+  const sw = window.innerWidth;
+  const sh = window.innerHeight;
+  // Foot position of pet = pet.y + SPRITE_CONTENT.bottom * SPRITE_SCALE
+  return [
+    { id: 'screen-bottom', x: 0, y: sh, width: sw, type: 'floor', source: 'screen' },
+    { id: 'screen-top', x: 0, y: 0, width: sw, type: 'ceiling', source: 'screen' },
+    { id: 'screen-left', x: 0, y: 0, height: sh, type: 'wallLeft', source: 'screen' },
+    { id: 'screen-right', x: sw, y: 0, height: sh, type: 'wallRight', source: 'screen' },
+  ];
+}
+
+function rebuildPlatforms(windowPlatforms = []) {
+  platforms = [...buildScreenPlatforms(), ...windowPlatforms];
+}
+
+// Pet foot Y position (bottom of visible knight)
+function petFootY() {
+  return pet.y + SPRITE_CONTENT.bottom * SPRITE_SCALE;
+}
+function petHeadY() {
+  return pet.y + SPRITE_CONTENT.top * SPRITE_SCALE;
+}
+function petLeftX() {
+  return pet.x + SPRITE_CONTENT.left * SPRITE_SCALE;
+}
+function petRightX() {
+  return pet.x + SPRITE_CONTENT.right * SPRITE_SCALE;
+}
+function petCenterX() {
+  return pet.x + (FRAME_WIDTH * SPRITE_SCALE) / 2;
+}
+
+// Check if pet's feet are on a horizontal platform
+function findFloorBelow(footY, centerX, vy) {
+  let best = null;
+  let bestDist = Infinity;
+  // Tolerance scales with fall speed to prevent tunneling
+  const speedTolerance = Math.max(4, Math.abs(vy) * 0.05);
+  for (const p of platforms) {
+    if (p.type !== 'floor') continue;
+    // Pet must be horizontally within the platform
+    if (centerX >= p.x && centerX <= p.x + p.width) {
+      const dist = p.y - footY;
+      // Accept if pet is near the floor (above or slightly below due to tunneling)
+      if (dist >= -speedTolerance && dist < bestDist && (dist <= 2 || vy >= 0)) {
+        best = p;
+        bestDist = dist;
+      }
+    }
+  }
+  return best;
+}
+
+// Check if pet is touching a vertical wall
+function findWall(leftX, rightX, headY, footY) {
+  for (const p of platforms) {
+    if (p.type === 'wallLeft') {
+      // Wall on the left side of screen/window — pet's LEFT edge touches it
+      if (leftX <= p.x + 4 && leftX >= p.x - 4) {
+        if (footY > p.y && headY < p.y + (p.height || 0)) {
+          return { platform: p, side: -1 };
+        }
+      }
+    } else if (p.type === 'wallRight') {
+      // Wall on the right side — pet's RIGHT edge touches it
+      if (rightX >= p.x - 4 && rightX <= p.x + 4) {
+        if (footY > p.y && headY < p.y + (p.height || 0)) {
+          return { platform: p, side: 1 };
+        }
+      }
+    }
+  }
+  return null;
+}
 
 // Mouse Passthrough Module (ported)
 const MousePassthrough = {
@@ -235,85 +420,203 @@ function draw(timestamp) {
   // Clear canvas
   ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
 
-  // Update physics (inertia/throw)
+  // Delta time (capped at 40ms to avoid physics explosions)
   const dt = Math.min(40, timestamp - (pet._lastTimestamp || timestamp));
   pet._lastTimestamp = timestamp;
+  const dtSec = dt / 1000;
 
-  // Move to target if active
-  if (pet.movingToTarget && pet.targetX !== null && pet.targetY !== null) {
-    const dx = pet.targetX - pet.x;
-    const dy = pet.targetY - pet.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  // Track time in current state
+  pet.stateTimer += dt;
 
-    if (distance > 5) {
-      // Move towards target at constant speed
-      const speed = 300; // pixels per second
-      const moveDistance = speed * (dt / 1000);
-      const ratio = Math.min(moveDistance / distance, 1);
-      
-      pet.x += dx * ratio;
-      pet.y += dy * ratio;
-      
-      // Set direction based on movement
-      pet.direction = dx > 0 ? 1 : -1;
-      
-      // Set state to RUN while moving
-      if (pet.state !== STATES.RUN) {
-        setState(STATES.RUN);
-      }
-      
-      sendInteractiveBoundsIfNeeded();
-    } else {
-      // Reached target - perform attack
-      pet.movingToTarget = false;
-      setState(STATES.ATTACK);
-      setTimeout(() => {
-        pet.targetX = null;
-        pet.targetY = null;
-        setState(STATES.IDLE);
-      }, 400);
-    }
-  } else if (Math.abs(pet.vx) > 0.01 || Math.abs(pet.vy) > 0.01) {
-    // dt in ms, velocities are pixels/sec
-    const dx = pet.vx * (dt / 1000);
-    const dy = pet.vy * (dt / 1000);
-    const newX = pet.x + dx;
-    const newY = pet.y + dy;
-    
-    // Clamp to screen bounds
-    const minX = 0;
-    const maxX = window.innerWidth - FRAME_WIDTH * SPRITE_SCALE;
-    const minY = 0;
-    const maxY = window.innerHeight - FRAME_HEIGHT * SPRITE_SCALE;
-    
-    pet.x = Math.max(minX, Math.min(maxX, newX));
-    pet.y = Math.max(minY, Math.min(maxY, newY));
-    
-    // If hit screen edge while running autonomously, reverse direction
-    if (pet.state === STATES.RUN && !pet.isDragging) {
-      if (newX <= minX || newX >= maxX) {
-        pet.direction *= -1;
-        pet.vx *= -1;
-      }
-      if (newY <= minY || newY >= maxY) {
-        pet.vy *= -1;
+  // Always send bounds to keep interactive window in sync
+  sendInteractiveBoundsIfNeeded();
+
+  // ====== PHYSICS UPDATE ======
+  if (!pet.contextMenuOpen && !pet.isDragging && !pet.locked) {
+    // --- Move to target (attack target system) ---
+    if (pet.movingToTarget && pet.targetX !== null && pet.targetY !== null) {
+      const dx = pet.targetX - pet.x;
+      const dy = pet.targetY - pet.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 5) {
+        const speed = 300;
+        const moveDistance = speed * dtSec;
+        const ratio = Math.min(moveDistance / distance, 1);
+        pet.x += dx * ratio;
+        pet.y += dy * ratio;
+        pet.direction = dx > 0 ? 1 : -1;
+        if (pet.state !== STATES.RUN) setState(STATES.RUN);
+      } else {
+        pet.movingToTarget = false;
+        setState(STATES.ATTACK);
+        setTimeout(() => {
+          pet.targetX = null;
+          pet.targetY = null;
+          setState(STATES.IDLE);
+        }, 400);
       }
     } else {
-      // Apply friction only when not in autonomous RUN state (e.g., after throw)
-      const friction = 0.95;
-      pet.vx *= friction;
-      pet.vy *= friction;
-      
-      // If velocities are very small, zero them
-      if (Math.abs(pet.vx) < 0.5) pet.vx = 0;
-      if (Math.abs(pet.vy) < 0.5) pet.vy = 0;
-    }
+      // --- Gravity ---
+      if (!pet.grounded && !pet.onWall) {
+        pet.vy = Math.min(pet.vy + PHYSICS.GRAVITY * dtSec, PHYSICS.MAX_FALL_SPEED);
+      } else if (pet.onWall) {
+        // Wall slide: slow descent or climb
+        if (pet.state === STATES.WALL_CLIMB) {
+          pet.vy = PHYSICS.WALL_CLIMB_SPEED;
+        } else {
+          pet.vy = PHYSICS.WALL_SLIDE_SPEED;
+        }
+      }
 
-    // Report interactive bounds so main can reposition the small interactive window
-    sendInteractiveBoundsIfNeeded();
+      // --- Apply velocity ---
+      const newX = pet.x + pet.vx * dtSec;
+      const newY = pet.y + pet.vy * dtSec;
+
+      // --- Clamp X to screen (allow transparent frame to go off-screen) ---
+      const minX = -SPRITE_CONTENT.left * SPRITE_SCALE;
+      const maxX = window.innerWidth - SPRITE_CONTENT.right * SPRITE_SCALE;
+      pet.x = Math.max(minX, Math.min(maxX, newX));
+      pet.y = newY;
+
+      // --- Safety: never fall below screen bottom ---
+      const maxY = window.innerHeight - SPRITE_CONTENT.bottom * SPRITE_SCALE;
+      if (pet.y > maxY) {
+        pet.y = maxY;
+        pet.vy = 0;
+        pet.grounded = true;
+        pet.onWall = false;
+        pet.currentPlatform = platforms.find(p => p.id === 'screen-bottom') || null;
+        pet.canDoubleJump = true;
+        if (pet.state === STATES.FALL || pet.state === STATES.JUMP || pet.state === STATES.JUMP_FALL_BETWEEN) {
+          setState(Math.abs(pet.vx) > 10 ? STATES.RUN : STATES.IDLE);
+        }
+      }
+
+      // --- Floor collision ---
+      const foot = petFootY();
+      const cx = petCenterX();
+      const floor = findFloorBelow(foot, cx, pet.vy);
+
+      if (floor && pet.vy >= 0) {
+        // Land on platform
+        const landY = floor.y - SPRITE_CONTENT.bottom * SPRITE_SCALE;
+        if (pet.y >= landY - 2) {
+          pet.y = landY;
+          pet.vy = 0;
+          if (!pet.grounded) {
+            pet.grounded = true;
+            pet.currentPlatform = floor;
+            pet.onWall = false;
+            pet.canDoubleJump = true;
+            // Transition from air to ground
+            if (pet.state === STATES.FALL || pet.state === STATES.JUMP || pet.state === STATES.JUMP_FALL_BETWEEN) {
+              if (Math.abs(pet.vx) > 10) {
+                setState(STATES.RUN);
+              } else {
+                setState(STATES.IDLE);
+              }
+            }
+          }
+        }
+      } else if (pet.grounded && pet.vy >= 0) {
+        // Check if we walked off the edge of our platform
+        if (pet.currentPlatform) {
+          const p = pet.currentPlatform;
+          if (cx < p.x || cx > p.x + p.width) {
+            pet.grounded = false;
+            pet.currentPlatform = null;
+            setState(STATES.FALL);
+          }
+        }
+      }
+
+      // --- Wall collision ---
+      if (!pet.grounded) {
+        const wall = findWall(petLeftX(), petRightX(), petHeadY(), petFootY());
+        if (wall) {
+          pet.onWall = true;
+          pet.wallSide = wall.side;
+          pet.direction = -wall.side; // Face away from wall
+          if (pet.state !== STATES.WALL_SLIDE && pet.state !== STATES.WALL_CLIMB && pet.state !== STATES.WALL_HANG) {
+            setState(STATES.WALL_SLIDE);
+          }
+        } else {
+          pet.onWall = false;
+        }
+      } else {
+        pet.onWall = false;
+      }
+
+      // --- Friction ---
+      if (pet.grounded) {
+        // Ground friction: only when not actively running
+        if (pet.state !== STATES.RUN && pet.state !== STATES.DASH && pet.state !== STATES.ROLL) {
+          pet.vx *= PHYSICS.GROUND_FRICTION;
+          if (Math.abs(pet.vx) < 1) pet.vx = 0;
+        }
+      } else if (!pet.onWall) {
+        // Air friction (very light)
+        pet.vx *= PHYSICS.AIR_FRICTION;
+      }
+
+      // --- Ceiling collision ---
+      const headY = petHeadY();
+      if (headY <= 0 && pet.vy < 0) {
+        pet.vy = 0;
+        pet.y = -SPRITE_CONTENT.top * SPRITE_SCALE;
+      }
+
+      // --- Auto state transitions ---
+      if (!pet.grounded && !pet.onWall) {
+        if (pet.vy > 20 && pet.state === STATES.JUMP) {
+          setState(STATES.JUMP_FALL_BETWEEN);
+        } else if (pet.vy > 80 && pet.state === STATES.JUMP_FALL_BETWEEN) {
+          setState(STATES.FALL);
+        } else if (pet.vy > 20 && pet.state !== STATES.JUMP && pet.state !== STATES.JUMP_FALL_BETWEEN && pet.state !== STATES.FALL && pet.state !== STATES.ATTACK && pet.state !== STATES.DASH) {
+          setState(STATES.FALL);
+        }
+      }
+
+      // --- Direction from velocity ---
+      if (pet.grounded && Math.abs(pet.vx) > 5 && pet.state === STATES.RUN) {
+        pet.direction = pet.vx > 0 ? 1 : -1;
+      }
+
+      // --- Dash timer ---
+      if (pet.state === STATES.DASH && pet.stateTimer > PHYSICS.DASH_DURATION) {
+        pet.vx = pet.direction * PHYSICS.RUN_SPEED_MIN;
+        if (pet.grounded) {
+          setState(STATES.RUN);
+        } else {
+          setState(STATES.FALL);
+        }
+      }
+
+      // --- Wall climb timer: auto release after 2s ---
+      if (pet.state === STATES.WALL_CLIMB && pet.stateTimer > 2000) {
+        // Jump off wall
+        petWallJump();
+      }
+      if (pet.state === STATES.WALL_SLIDE && pet.stateTimer > 1500) {
+        // Transition to wall hang or release
+        if (Math.random() > 0.5) {
+          setState(STATES.WALL_HANG);
+        } else {
+          setState(STATES.WALL_CLIMB);
+        }
+      }
+      if (pet.state === STATES.WALL_HANG && pet.stateTimer > 1000) {
+        if (Math.random() > 0.3) {
+          setState(STATES.WALL_CLIMB);
+        } else {
+          petWallJump();
+        }
+      }
+    }
   }
 
-  // Animation frame update
+  // ====== ANIMATION FRAME UPDATE ======
   const config = SPRITES[pet.state];
   if (config && config.frames > 1) {
     const frameInterval = 1000 / config.frameRate;
@@ -323,7 +626,7 @@ function draw(timestamp) {
     }
   }
 
-  // Draw pet sprite
+  // ====== DRAW PET SPRITE ======
   ctx.save();
   ctx.translate(pet.x + (FRAME_WIDTH * SPRITE_SCALE) / 2, pet.y);
   if (pet.direction === -1) {
@@ -332,53 +635,126 @@ function draw(timestamp) {
   ctx.translate(-(FRAME_WIDTH * SPRITE_SCALE) / 2, 0);
 
   const img = pet.images[pet.state];
-  const srcX = pet.currentFrame * FRAME_WIDTH;
-  ctx.drawImage(
-    img,
-    srcX, 0, FRAME_WIDTH, FRAME_HEIGHT,
-    0, 0, FRAME_WIDTH * SPRITE_SCALE, FRAME_HEIGHT * SPRITE_SCALE
-  );
+  if (img) {
+    const srcX = pet.currentFrame * FRAME_WIDTH;
+    ctx.drawImage(
+      img,
+      srcX, 0, FRAME_WIDTH, FRAME_HEIGHT,
+      0, 0, FRAME_WIDTH * SPRITE_SCALE, FRAME_HEIGHT * SPRITE_SCALE
+    );
+  }
   ctx.restore();
   raf = requestAnimationFrame(draw);
 }
 
+// ============= JUMP & WALL JUMP =============
+function petJump() {
+  if (pet.grounded) {
+    pet.vy = PHYSICS.JUMP_VELOCITY;
+    pet.grounded = false;
+    pet.currentPlatform = null;
+    setState(STATES.JUMP);
+  } else if (pet.canDoubleJump) {
+    pet.vy = PHYSICS.JUMP_VELOCITY * 0.85;
+    pet.canDoubleJump = false;
+    setState(STATES.JUMP);
+  }
+}
+
+function petWallJump() {
+  pet.vx = -pet.wallSide * PHYSICS.WALL_JUMP_VX;
+  pet.vy = PHYSICS.WALL_JUMP_VY;
+  pet.onWall = false;
+  pet.direction = -pet.wallSide;
+  setState(STATES.JUMP);
+}
+
+function petDash() {
+  pet.vx = pet.direction * PHYSICS.DASH_SPEED;
+  pet.vy = 0;
+  setState(STATES.DASH);
+}
+
 function setState(newState) {
   if (pet.state !== newState) {
+    pet.prevState = pet.state;
     pet.state = newState;
     pet.currentFrame = 0;
+    pet.stateTimer = 0;
     console.log('Pet state:', newState);
   }
 }
 
 function startBehavior() {
   const scheduleNextBehavior = () => {
-    const delay = 3000 + Math.random() * 5000; // More frequent behavior changes
+    const delay = 2000 + Math.random() * 4000;
     behaviorTimer = setTimeout(() => {
-      // Don't change behavior if dragging, menu open, moving to target, or locked
-      if (pet.isDragging || pet.contextMenuOpen || pet.movingToTarget || pet.locked) {
+      if (pet.isDragging || pet.movingToTarget || pet.locked) {
         scheduleNextBehavior();
         return;
       }
-      
-      const rand = Math.random();
-      if (rand < 0.3) {
-        // 30% chance: Idle
-        setState(STATES.IDLE);
-        pet.vx = 0;
-        pet.vy = 0;
-      } else if (rand < 0.85) {
-        // 55% chance: Run to random position
-        setState(STATES.RUN);
-        pet.direction = Math.random() > 0.5 ? 1 : -1;
-        // Set velocity to move in direction
-        const speed = 80 + Math.random() * 120; // 80-200 pixels/sec
-        pet.vx = pet.direction * speed;
-        pet.vy = (Math.random() - 0.5) * 60; // Small vertical movement
-      } else {
-        // 15% chance: Sleep
-        setState(STATES.SLEEP);
-        pet.vx = 0;
-        pet.vy = 0;
+      if (pet.contextMenuOpen) {
+        scheduleNextBehavior();
+        return;
+      }
+      // Only change behavior when grounded or on wall
+      if (!pet.grounded && !pet.onWall) {
+        scheduleNextBehavior();
+        return;
+      }
+
+      if (pet.grounded) {
+        const rand = Math.random();
+        if (rand < 0.10) {
+          // 10% — Idle
+          setState(STATES.IDLE);
+          pet.vx = 0;
+        } else if (rand < 0.50) {
+          // 40% — Run on current platform
+          setState(STATES.RUN);
+          pet.direction = Math.random() > 0.5 ? 1 : -1;
+          const speed = PHYSICS.RUN_SPEED_MIN + Math.random() * (PHYSICS.RUN_SPEED_MAX - PHYSICS.RUN_SPEED_MIN);
+          pet.vx = pet.direction * speed;
+        } else if (rand < 0.75) {
+          // 25% — Jump (may reach another platform)
+          pet.direction = Math.random() > 0.5 ? 1 : -1;
+          const speed = PHYSICS.RUN_SPEED_MIN + Math.random() * (PHYSICS.RUN_SPEED_MAX - PHYSICS.RUN_SPEED_MIN);
+          pet.vx = pet.direction * speed;
+          petJump();
+        } else if (rand < 0.85) {
+          // 10% — Dash
+          pet.direction = Math.random() > 0.5 ? 1 : -1;
+          petDash();
+        } else if (rand < 0.92) {
+          // 7% — Sleep
+          setState(STATES.SLEEP);
+          pet.vx = 0;
+        } else {
+          // 8% — Roll
+          pet.direction = Math.random() > 0.5 ? 1 : -1;
+          pet.vx = pet.direction * 200;
+          setState(STATES.ROLL);
+          setTimeout(() => {
+            if (pet.state === STATES.ROLL) {
+              if (pet.grounded) setState(STATES.IDLE);
+              else setState(STATES.FALL);
+              pet.vx *= 0.3;
+            }
+          }, 750);
+        }
+      } else if (pet.onWall) {
+        const rand = Math.random();
+        if (rand < 0.4) {
+          // Climb
+          setState(STATES.WALL_CLIMB);
+        } else if (rand < 0.7) {
+          // Jump off
+          petWallJump();
+        } else {
+          // Hang
+          setState(STATES.WALL_HANG);
+          pet.vy = 0;
+        }
       }
       scheduleNextBehavior();
     }, delay);
@@ -398,11 +774,15 @@ function onPetClick(isRightClick = false, position = null) {
     if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
       window.petAPI.window.expandInteractiveForDrag(true);
     }
-    const menuPos = position || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    emit('show-context-menu', menuPos);
+    // Pass raw click position - PetContextMenu will auto-clamp to viewport
+    const petCenterX = pet.x + (FRAME_WIDTH * SPRITE_SCALE) / 2;
+    const petTopY = pet.y + SPRITE_CONTENT.top * SPRITE_SCALE;
+    const menuX = position ? position.x : petCenterX;
+    const menuY = position ? position.y : petTopY;
+    emit('show-context-menu', { x: menuX, y: menuY });
     return;
   }
-  
+
   // Left-click triggers attack animation (only if not dragging and menu closed)
   if (!pet.isDragging && !pet.contextMenuOpen) {
     if (pet.state === STATES.SLEEP) {
@@ -418,12 +798,14 @@ function onPetDoubleClick() {
   window.petAPI.window.showSettings();
 }
 
-// Hitbox configuration - adjustable for future customization
+// Hitbox configuration - negative values SHRINK the hitbox inward from sprite edges
+// Sprite renders at 180×120 CSS px (120×80 * 1.5 scale)
+// Adjust these to tighten the clickable area around the visible knight pixels
 const HITBOX_CONFIG = {
-  minSize: 30,        // Minimum hitbox dimension
-  topPadding: 0,      // Padding above sprite
-  sidePadding: 0,     // Padding on left/right
-  bottomPadding: 2    // Padding below sprite (for ground contact)
+  minSize: 30,          // Minimum hitbox dimension (safety floor)
+  topPadding: -55,      // Cut 55px from top (skip transparent sky area)
+  sidePadding: -45,     // Cut 45px from each side (skip transparent edges)
+  bottomPadding: -5     // Cut 5px from bottom
 };
 let _lastBoundsSentAt = 0; // throttle
 
@@ -490,8 +872,11 @@ function bindEvents() {
         dragOffset.y = (FRAME_HEIGHT * SPRITE_SCALE) / 2;
         document.body.style.cursor = 'grabbing';
         recentMoves = [{ x: localX, y: localY, t: performance.now() }];
-        setState(STATES.WALL_SLIDE);
-        
+        pet.grounded = false;
+        pet.onWall = false;
+        pet.currentPlatform = null;
+        setState(STATES.HIT);
+
         // Expand interactive window to fullscreen to catch fast drags
         if (window.petAPI && window.petAPI.window && window.petAPI.window.expandInteractiveForDrag) {
           window.petAPI.window.expandInteractiveForDrag(true);
@@ -503,8 +888,8 @@ function bindEvents() {
         const screenH = window.innerHeight;
         let newX = localX - dragOffset.x;
         let newY = localY - dragOffset.y;
-        newX = Math.max(0, Math.min(screenW - FRAME_WIDTH * SPRITE_SCALE, newX));
-        newY = Math.max(0, Math.min(screenH - FRAME_HEIGHT * SPRITE_SCALE, newY));
+        newX = Math.max(-SPRITE_CONTENT.left * SPRITE_SCALE, Math.min(screenW - SPRITE_CONTENT.right * SPRITE_SCALE, newX));
+        newY = Math.max(-SPRITE_CONTENT.top * SPRITE_SCALE, Math.min(screenH - SPRITE_CONTENT.bottom * SPRITE_SCALE, newY));
         pet.x = newX;
         pet.y = newY;
         recentMoves.push({ x: localX, y: localY, t: performance.now() });
@@ -519,18 +904,20 @@ function bindEvents() {
       if (pet.isDragging && !pet.contextMenuOpen) {
         pet.isDragging = false;
         document.body.style.cursor = '';
-        setState(STATES.IDLE);
+        // After release: gravity takes over. Set FALL state — draw() will handle landing.
+        pet.grounded = false;
+        pet.onWall = false;
+        setState(STATES.FALL);
         // Compute velocity from recent moves - only throw if actually dragged
         if (recentMoves.length >= 2 && !pet.locked) {
           const a = recentMoves[0];
           const b = recentMoves[recentMoves.length - 1];
           const dt = Math.max(1, b.t - a.t);
-          // Only apply throw velocity if there was significant movement
           const dx = b.x - a.x;
           const dy = b.y - a.y;
           if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
-            pet.vx = dx / dt * 1000; // pixels/sec
-            pet.vy = dy / dt * 1000;
+            pet.vx = Math.max(-600, Math.min(600, dx / dt * 1000));
+            pet.vy = Math.max(-800, Math.min(200, dy / dt * 1000)); // cap throw velocity
           }
         }
         recentMoves = [];
@@ -586,7 +973,7 @@ function bindEvents() {
       }
       window.petAPI.window.sendPetInput({ type: 'mousedown', button: e.button, ...toScreen(e) });
     };
-    
+
     // Use document for mousemove/mouseup to catch events even when cursor leaves window
     const mousemove = (e) => {
       if (interactiveDragging) {
@@ -619,8 +1006,9 @@ function bindEvents() {
       if (window.petAPI?.pet?.setContextMenuState) {
         window.petAPI.pet.setContextMenuState(true);
       }
-      // Wait for window expansion, then show menu at screen position
-      // (after expansion, window is at 0,0 so screen coords = client coords)
+      // Wait for window expansion, then show menu at click position
+      // After expansion window is at 0,0, so screen coords = client coords
+      // PetContextMenu auto-clamps to viewport edges
       setTimeout(() => {
         emit('show-context-menu', { x: screenX, y: screenY });
       }, 50);
@@ -673,8 +1061,8 @@ function bindEvents() {
       const screenH = window.innerHeight;
       let newX = e.clientX - localDragOffset.x;
       let newY = e.clientY - localDragOffset.y;
-      newX = Math.max(0, Math.min(screenW - FRAME_WIDTH * SPRITE_SCALE, newX));
-      newY = Math.max(0, Math.min(screenH - FRAME_HEIGHT * SPRITE_SCALE, newY));
+      newX = Math.max(-SPRITE_CONTENT.left * SPRITE_SCALE, Math.min(screenW - SPRITE_CONTENT.right * SPRITE_SCALE, newX));
+      newY = Math.max(-SPRITE_CONTENT.top * SPRITE_SCALE, Math.min(screenH - SPRITE_CONTENT.bottom * SPRITE_SCALE, newY));
       pet.x = newX;
       pet.y = newY;
     }
@@ -702,12 +1090,12 @@ function bindEvents() {
 
   // Cleanup function to remove event listeners on unmount
   return () => {
-    window.removeEventListener('mousedown', () => {});
-    window.removeEventListener('mousemove', () => {});
-    window.removeEventListener('mouseup', () => {});
-    window.removeEventListener('click', () => {});
-    window.removeEventListener('dblclick', () => {});
-    window.removeEventListener('contextmenu', () => {});
+    window.removeEventListener('mousedown', () => { });
+    window.removeEventListener('mousemove', () => { });
+    window.removeEventListener('mouseup', () => { });
+    window.removeEventListener('click', () => { });
+    window.removeEventListener('dblclick', () => { });
+    window.removeEventListener('contextmenu', () => { });
   };
 }
 
@@ -725,8 +1113,23 @@ onMounted(async () => {
     ctx.scale(dpr, dpr);
   }
 
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', () => {
+    resize();
+    rebuildPlatforms();
+  });
   resize();
+
+  // Build initial platforms and place pet on screen bottom
+  rebuildPlatforms();
+  const bottomPlat = platforms.find(p => p.id === 'screen-bottom');
+  if (bottomPlat) {
+    const footOffset = SPRITE_CONTENT.bottom * SPRITE_SCALE;
+    pet.y = bottomPlat.y - footOffset;
+    pet.grounded = true;
+    pet.currentPlatform = bottomPlat;
+  }
+  // Poll for platform changes (window moves etc.)
+  platformPollTimer = setInterval(() => rebuildPlatforms(), 2000);
 
   // Listen for hitbox debug toggle events
   if (window.petAPI && window.petAPI.on && window.petAPI.on.hitboxDebug) {
@@ -774,6 +1177,29 @@ onMounted(async () => {
         }
       });
     }
+
+    // Listen for display switch — reset pet position on new screen
+    if (mode === 'overlay' && window.petAPI.on.displayChanged) {
+      window.petAPI.on.displayChanged(() => {
+        console.log('Display changed — rebuilding platforms');
+        // After the overlay window is repositioned, innerWidth/innerHeight reflect new display
+        setTimeout(() => {
+          rebuildPlatforms();
+          const bottomPlat = platforms.find(p => p.id === 'screen-bottom');
+          if (bottomPlat) {
+            pet.x = (window.innerWidth / 2) - (FRAME_WIDTH * SPRITE_SCALE / 2);
+            pet.y = bottomPlat.y - SPRITE_CONTENT.bottom * SPRITE_SCALE;
+            pet.vx = 0;
+            pet.vy = 0;
+            pet.grounded = true;
+            pet.onWall = false;
+            pet.currentPlatform = bottomPlat;
+            setState(STATES.IDLE);
+            sendInteractiveBoundsIfNeeded(true);
+          }
+        }, 200);
+      });
+    }
   }
 
   // Listen for local target attack event (same-window)
@@ -794,10 +1220,13 @@ onMounted(async () => {
   raf = requestAnimationFrame(draw);
 
   // Send initial pet bounds to interactive window (only from overlay)
+  // Send multiple times to ensure interactive window receives correct position
   if (mode === 'overlay') {
-    setTimeout(() => {
-      sendInteractiveBoundsIfNeeded(true);
-    }, 200);
+    const sendInitialBounds = () => sendInteractiveBoundsIfNeeded(true);
+    setTimeout(sendInitialBounds, 200);
+    setTimeout(sendInitialBounds, 500);
+    setTimeout(sendInitialBounds, 1000);
+    setTimeout(sendInitialBounds, 2000);
   }
 
   // Initialize mouse passthrough after a short delay
@@ -809,8 +1238,9 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (behaviorTimer) clearTimeout(behaviorTimer);
   if (pollInterval) clearInterval(pollInterval);
+  if (platformPollTimer) clearInterval(platformPollTimer);
   if (raf) cancelAnimationFrame(raf);
-  window.removeEventListener('resize', () => {});
+  window.removeEventListener('resize', () => { });
   window.removeEventListener('pet-context-menu-closed', handleMenuClosed);
 });
 </script>
@@ -820,11 +1250,14 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
 }
-canvas { display: block; }
+
+canvas {
+  display: block;
+}
 
 /* Debug styling for interactive hitbox */
 .debug-hitbox {
   outline: 3px dashed rgba(255, 0, 0, 0.95);
   box-shadow: 0 0 0 6px rgba(255, 0, 0, 0.06) inset;
 }
-</style> 
+</style>

@@ -2,19 +2,36 @@
   <section id="section-subscriptions" class="section">
     <div class="section-header">
       <h1>Subscriptions</h1>
-      <button id="add-subscription-btn" class="header-btn" @click="showModal = true">
-        + Add
+      <button
+        id="add-subscription-btn"
+        class="header-btn"
+        v-motion
+        :tapped="{ scale: 0.95 }"
+        @click="showModal = true"
+      >
+        <Plus :size="16" />
+        Add
       </button>
     </div>
 
     <div id="subscription-summary">
-      <div class="summary-card">
+      <div
+        class="summary-card"
+        v-motion
+        :initial="{ opacity: 0, scale: 0.95 }"
+        :enter="{ opacity: 1, scale: 1 }"
+      >
         <span class="summary-label">Monthly Total</span>
         <span id="monthly-total" class="summary-value">
           ${{ monthlyTotal.toFixed(2) }}
         </span>
       </div>
-      <div class="summary-card">
+      <div
+        class="summary-card"
+        v-motion
+        :initial="{ opacity: 0, scale: 0.95 }"
+        :enter="{ opacity: 1, scale: 1, transition: { delay: 100 } }"
+      >
         <span class="summary-label">Yearly Total</span>
         <span id="yearly-total" class="summary-value">
           ${{ yearlyTotal.toFixed(2) }}
@@ -28,9 +45,12 @@
         No subscriptions yet. Click "+ Add" to create one.
       </li>
       <li
-        v-for="sub in subscriptions"
+        v-for="(sub, idx) in subscriptions"
         :key="sub.id"
         class="subscription-item"
+        v-motion
+        :initial="{ opacity: 0, y: 8 }"
+        :enter="{ opacity: 1, y: 0, transition: { delay: idx * 50 } }"
       >
         <div class="subscription-info">
           <div class="subscription-name">{{ sub.name }}</div>
@@ -38,17 +58,27 @@
             {{ sub.currency }} {{ sub.cost }} / {{ sub.billing_cycle }}
           </div>
         </div>
-        <button class="delete-btn" @click="deleteSubscription(sub.id)">×</button>
+        <button class="delete-btn" @click="deleteSubscription(sub.id)">
+          <Trash2 :size="14" />
+        </button>
       </li>
     </ul>
 
     <!-- Add Subscription Modal -->
-    <div v-if="showModal" id="subscription-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Add Subscription</h2>
-          <button class="modal-close" @click="closeModal">&times;</button>
-        </div>
+    <Transition name="modal">
+      <div v-if="showModal" id="subscription-modal" class="modal">
+        <div
+          class="modal-content"
+          v-motion
+          :initial="{ opacity: 0, scale: 0.9, y: 20 }"
+          :enter="{ opacity: 1, scale: 1, y: 0 }"
+        >
+          <div class="modal-header">
+            <h2>Add Subscription</h2>
+            <button class="modal-close" @click="closeModal">
+              <X :size="18" />
+            </button>
+          </div>
         <form id="subscription-form" @submit.prevent="handleSubmit">
           <div class="form-group">
             <label for="sub-name">Name</label>
@@ -94,13 +124,15 @@
             <button type="submit" class="btn-submit">Add Subscription</button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </Transition>
   </section>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { Plus, Trash2, X } from 'lucide-vue-next';
 import { useSubscriptions } from '../composables/useSubscriptions';
 
 const {

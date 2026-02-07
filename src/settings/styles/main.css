@@ -188,13 +188,20 @@ input:checked + .slider::before {
    Animations
    ============================================ */
 
-.section {
-  animation: fadeIn 0.2s ease;
+/* Section transition (App.vue) */
+.section-enter-active,
+.section-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.section-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.section-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 @keyframes blink {
@@ -224,6 +231,9 @@ input:checked + .slider::before {
 }
 
 .header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 10px 20px;
   background: var(--color-accent);
   border: none;
@@ -269,6 +279,9 @@ input:checked + .slider::before {
 }
 
 #add-todo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 14px 28px;
   background: var(--color-accent);
   border: none;
@@ -399,6 +412,9 @@ input:checked + .slider::before {
 }
 
 .timer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 14px 32px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -562,10 +578,12 @@ input:checked + .slider::before {
 }
 
 .modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   border: none;
   color: var(--color-text-muted);
-  font-size: 24px;
   cursor: pointer;
   padding: 4px 8px;
 }
@@ -712,6 +730,9 @@ input:checked + .slider::before {
    ============================================ */
 
 .filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 16px;
   background: transparent;
   border: 1px solid var(--color-border);
@@ -730,4 +751,31 @@ input:checked + .slider::before {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: white;
+}
+
+/* Todo list transitions */
+.todo-enter-active,
+.todo-leave-active {
+  transition: all 0.2s ease;
+}
+
+.todo-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.todo-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* Modal backdrop transition */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
 }

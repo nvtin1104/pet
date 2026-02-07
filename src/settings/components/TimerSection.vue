@@ -4,7 +4,12 @@
       <h1>Pomodoro Timer</h1>
     </div>
 
-    <div id="timer-container">
+    <div
+      id="timer-container"
+      v-motion
+      :initial="{ opacity: 0, y: 12 }"
+      :enter="{ opacity: 1, y: 0 }"
+    >
       <div id="timer-display">
         <span id="timer-minutes">{{ timer.displayMinutes }}</span>
         <span class="timer-separator">:</span>
@@ -18,23 +23,32 @@
           id="timer-start"
           class="timer-btn primary"
           :disabled="timer.isRunning.value"
+          v-motion
+          :tapped="{ scale: 0.95 }"
           @click="timer.start()"
         >
+          <Play :size="16" />
           Start
         </button>
         <button
           id="timer-pause"
           class="timer-btn"
           :disabled="!timer.isRunning.value"
+          v-motion
+          :tapped="{ scale: 0.95 }"
           @click="timer.pause()"
         >
+          <Pause :size="16" />
           Pause
         </button>
         <button
           id="timer-reset"
           class="timer-btn"
+          v-motion
+          :tapped="{ scale: 0.95 }"
           @click="timer.reset()"
         >
+          <RotateCcw :size="16" />
           Reset
         </button>
       </div>
@@ -46,6 +60,9 @@
           class="preset-btn"
           :class="{ active: timer.currentType.value === preset.type }"
           :data-type="preset.type"
+          v-motion
+          :hovered="{ scale: 1.05 }"
+          :tapped="{ scale: 0.95 }"
           @click="timer.setType(preset.type)"
         >
           {{ preset.label }}
@@ -57,6 +74,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import { Play, Pause, RotateCcw } from 'lucide-vue-next';
 import { useTimer, type TimerType } from '../composables/useTimer';
 import { useSettings } from '../composables/useSettings';
 

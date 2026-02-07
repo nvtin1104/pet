@@ -18,15 +18,17 @@
 
     <ul class="nav-items">
       <li
-        v-for="item in navItems"
+        v-for="(item, idx) in navItems"
         :key="item.id"
         :class="{ active: activeSection === item.id }"
         :data-section="item.id"
+        v-motion
+        :initial="{ opacity: 0, x: -12 }"
+        :enter="{ opacity: 1, x: 0, transition: { delay: idx * 50 } }"
+        :hovered="{ x: 4 }"
         @click="$emit('change-section', item.id)"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <component :is="() => item.icon" />
-        </svg>
+        <component :is="item.icon" :size="18" />
         <span>{{ item.label }}</span>
       </li>
     </ul>
@@ -51,12 +53,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue';
+import { ref, onMounted } from 'vue';
+import { CheckSquare, Clock, CreditCard, Settings } from 'lucide-vue-next';
+import type { FunctionalComponent } from 'vue';
 
 interface NavItem {
   id: 'todos' | 'timer' | 'subscriptions' | 'settings';
   label: string;
-  icon: () => any;
+  icon: FunctionalComponent;
 }
 
 defineProps<{
@@ -70,43 +74,10 @@ defineEmits<{
 const petModeEnabled = ref(false);
 
 const navItems: NavItem[] = [
-  {
-    id: 'todos',
-    label: 'Todos',
-    icon: () => [
-      h('rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
-      h('path', { d: 'M9 12l2 2 4-4', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
-    ]
-  },
-  {
-    id: 'timer',
-    label: 'Timer',
-    icon: () => [
-      h('circle', { cx: '12', cy: '12', r: '9', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
-      h('path', { d: 'M12 7v5l3 3', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-      h('circle', { cx: '12', cy: '12', r: '1', fill: 'currentColor' })
-    ]
-  },
-  {
-    id: 'subscriptions',
-    label: 'Subscriptions',
-    icon: () => [
-      h('rect', { x: '2', y: '6', width: '20', height: '12', rx: '2', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
-      h('path', { d: 'M2 8h20', stroke: 'currentColor', 'stroke-width': '1.5' }),
-      h('circle', { cx: '7', cy: '13', r: '1', fill: 'currentColor' }),
-      h('circle', { cx: '12', cy: '13', r: '1', fill: 'currentColor' })
-    ]
-  },
-  {
-    id: 'settings',
-    label: 'Settings',
-    icon: () => [
-      h('circle', { cx: '12', cy: '12', r: '3', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none' }),
-      h('path', { d: 'M12 1v6M12 17v6', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round' }),
-      h('path', { d: 'm21 12-6-6v12l6-6Z', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linejoin': 'round' }),
-      h('path', { d: 'm3 12 6-6v12l-6-6Z', stroke: 'currentColor', 'stroke-width': '1.5', fill: 'none', 'stroke-linejoin': 'round' })
-    ]
-  }
+  { id: 'todos', label: 'Todos', icon: CheckSquare },
+  { id: 'timer', label: 'Timer', icon: Clock },
+  { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 onMounted(async () => {
